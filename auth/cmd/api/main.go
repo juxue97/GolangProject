@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/juxue97/auth/internal/db"
 	"github.com/juxue97/auth/internal/repository"
 	"github.com/juxue97/common"
@@ -10,12 +8,27 @@ import (
 
 const version = "0.0.1" // set into .env
 
+//	@title			Auth API
+//	@description	This is a authentication backend server.
+//	@termsOfService	http://swagger.io/terms/
+
+//	@contact.name	API Support
+//	@contact.url	http://www.swagger.io/support
+//	@contact.email	support@swagger.io
+
+// @license.name				Apache 2.0
+// @license.url				http://www.apache.org/licenses/LICENSE-2.0.html
+//
+// @securityDefinitions.apikey	ApiKeyAuth
+// @in							header
+// @name						Authorization
+// @description
 func main() {
 	// Consume .env here
 	cfg := config{
 		version: version,
-		url:     common.GetString("URL", "http://localhost"),
-		addr:    common.GetString("ADDR", "8000"),
+		apiUrl:  common.GetString("URL", "localhost:8000"),
+		addr:    common.GetString("ADDR", ":8000"),
 		env:     common.GetString("ENV", "development"),
 		db: db.PgDBConfig{
 			Addr:         common.GetString("DB_ADDR", "postgres://cibai:sohai@localhost:3000/social?sslmode=disable"),
@@ -25,8 +38,8 @@ func main() {
 		},
 	}
 
-	logger := common.NewLogger()
-	fmt.Println(cfg.db.Addr)
+	logger := common.Logger
+
 	db, err := db.New(cfg.db.Addr, cfg.db.MaxOpenConns, cfg.db.MaxIdleConns, cfg.db.MaxIdleTime)
 	if err != nil {
 		logger.Fatal(err)

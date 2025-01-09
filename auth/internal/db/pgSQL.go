@@ -3,8 +3,9 @@ package db
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
+
+	_ "github.com/lib/pq"
 )
 
 type PgDBConfig struct {
@@ -16,9 +17,6 @@ type PgDBConfig struct {
 
 func New(addr string, maxOpenConns int, maxIdleConns int, maxIdleTime string) (*sql.DB, error) {
 	db, err := sql.Open("postgres", addr)
-	fmt.Println(db)
-	fmt.Println(err)
-
 	if err != nil {
 		return nil, err
 	}
