@@ -27,8 +27,8 @@ func main() {
 	// Consume .env here
 	cfg := config{
 		version: version,
-		apiUrl:  common.GetString("URL", "localhost:8000"),
-		addr:    common.GetString("ADDR", ":8000"),
+		apiUrl:  common.GetString("API_URL", "localhost:8000"),
+		addr:    common.GetString("API_ADDR", ":8000"),
 		env:     common.GetString("ENV", "development"),
 		db: db.PgDBConfig{
 			Addr:         common.GetString("DB_ADDR", "postgres://cibai:sohai@localhost:3000/social?sslmode=disable"),
