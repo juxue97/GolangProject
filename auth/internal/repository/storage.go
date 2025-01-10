@@ -3,20 +3,46 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"time"
 
-	users "github.com/juxue97/auth/internal/repository/users"
+	"github.com/juxue97/auth/internal/db"
+	"github.com/juxue97/common"
 )
+
+var QueryTimeoutDuration = time.Second * 5
 
 type Repository struct {
 	Users interface {
-		Create(context.Context, *users.User) error
-		GetByID(context.Context, int64) (*users.User, error)
-		GetByEmail(context.Context, string) (*users.User, error)
+		Create(context.Context, *User) error
+		GetByID(context.Context, int64) (*User, error)
+		GetByEmail(context.Context, string) (*User, error)
+		CreateAndInvite(context.Context, *User, string, time.Duration) error
 	}
 }
 
-func NewRepository(db *sql.DB) Repository {
-	return Repository{
-		Users: &users.UserStore{DB: db},
+func NewRepository(db *sql.DB) *Repository {
+	return &Repository{
+		Users: &UserStore{DB: db},
 	}
+}
+
+var Store *Repository
+
+func init() {
+	Store = NewRepository(db.PgDB)
+	common.Logger.Info("Store initialized")
+}
+
+func WithTx(db *sql.DB, ctx context.Context, fn func(*sql.Tx) error) error {
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	if err := fn(tx); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
 }

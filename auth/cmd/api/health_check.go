@@ -18,8 +18,8 @@ import (
 func (app *application) healthCheckHandler(w http.ResponseWriter, r *http.Request) {
 	data := map[string]string{
 		"status":      "ok",
-		"environment": app.config.env,
-		"version":     app.config.version,
+		"environment": app.config.Env,
+		"version":     app.config.Version,
 	}
 	common.WriteJSON(w, http.StatusOK, data)
 }

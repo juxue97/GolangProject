@@ -9,28 +9,19 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 
+	"github.com/juxue97/auth/cmd/api/auth"
 	"github.com/juxue97/auth/cmd/api/users"
-	"github.com/juxue97/auth/internal/db"
-	"github.com/juxue97/auth/internal/repository"
+	"github.com/juxue97/auth/internal/config"
 	"github.com/juxue97/common"
 
 	"github.com/juxue97/auth/docs"
 	httpSwagger "github.com/swaggo/http-swagger/v2"
-	"go.uber.org/zap"
 )
 
 type application struct {
-	config config
-	store  repository.Repository
-	logger *zap.SugaredLogger
-}
-
-type config struct {
-	apiUrl  string
-	version string
-	addr    string
-	env     string
-	db      db.PgDBConfig
+	config config.Config
+	// store  repository.Repository
+	// logger *zap.SugaredLogger
 }
 
 const basePath = "/v1"
@@ -55,8 +46,13 @@ func (app *application) mount() http.Handler {
 	r.Route(basePath, func(r chi.Router) {
 		r.Get("/health", app.healthCheckHandler)
 
-		docsURL := fmt.Sprintf("%s/swagger/doc.json", app.config.addr)
+		docsURL := fmt.Sprintf("%s/swagger/doc.json", app.config.Addr)
 		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(docsURL)))
+
+		r.Route("/auth", func(r chi.Router) {
+			r.Post("/user", auth.RegisterUserHandler)
+			// r.Post("/token", auth.CreateTokenHandler)
+		})
 
 		r.Route("/users", func(r chi.Router) {
 			r.Post("/", users.CreateUserHandler)
@@ -68,19 +64,19 @@ func (app *application) mount() http.Handler {
 
 func (app *application) run(mux http.Handler) error {
 	// Docs
-	docs.SwaggerInfo.Version = version
-	docs.SwaggerInfo.Host = app.config.apiUrl
+	docs.SwaggerInfo.Version = app.config.Version
+	docs.SwaggerInfo.Host = app.config.ApiUrl
 	docs.SwaggerInfo.BasePath = basePath
 
 	srv := &http.Server{
-		Addr:         app.config.addr,
+		Addr:         app.config.Addr,
 		Handler:      mux,
 		WriteTimeout: time.Second * 30,
 		ReadTimeout:  time.Second * 10,
 		IdleTimeout:  time.Minute,
 	}
 
-	app.logger.Infow("server has started", "addr", app.config.addr, "enviroment", app.config.env)
+	common.Logger.Infow("server has started", "addr", app.config.Addr, "enviroment", app.config.Env)
 
 	return srv.ListenAndServe()
 }

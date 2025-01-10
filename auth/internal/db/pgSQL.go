@@ -5,14 +5,21 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/juxue97/auth/internal/config"
+	"github.com/juxue97/common"
 	_ "github.com/lib/pq"
 )
 
-type PgDBConfig struct {
-	Addr         string
-	MaxOpenConns int
-	MaxIdleConns int
-	MaxIdleTime  string
+var PgDB *sql.DB
+
+func init() {
+	PgDB, err := New(config.Configs.DB.Addr, config.Configs.DB.MaxOpenConns, config.Configs.DB.MaxIdleConns, config.Configs.DB.MaxIdleTime)
+	if err != nil {
+		common.Logger.Fatal(err)
+	}
+
+	defer PgDB.Close()
+	common.Logger.Info("Pg database connection established")
 }
 
 func New(addr string, maxOpenConns int, maxIdleConns int, maxIdleTime string) (*sql.DB, error) {
