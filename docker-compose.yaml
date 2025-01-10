@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:14.13-alpine3.20
+    container_name: golangPgData
+    restart: always
+    environment:
+      POSTGRES_DB: auth
+      POSTGRES_USER: juxue
+      POSTGRES_PASSWORD: veryStrongPassword
+    ports:
+      - "3000:5432"
+    volumes:
+      - D:/database/golangPgData:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
