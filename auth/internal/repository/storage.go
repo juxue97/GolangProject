@@ -17,6 +17,8 @@ type Repository struct {
 		GetByID(context.Context, int64) (*User, error)
 		GetByEmail(context.Context, string) (*User, error)
 		CreateAndInvite(context.Context, *User, string, time.Duration) error
+		ActivateUser(context.Context, string) error
+		Delete(context.Context, int64) error
 	}
 }
 
@@ -33,7 +35,7 @@ func init() {
 	common.Logger.Info("Store initialized")
 }
 
-func WithTx(db *sql.DB, ctx context.Context, fn func(*sql.Tx) error) error {
+func withTx(db *sql.DB, ctx context.Context, fn func(*sql.Tx) error) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err

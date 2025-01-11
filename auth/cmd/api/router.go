@@ -55,7 +55,9 @@ func (app *application) mount() http.Handler {
 		})
 
 		r.Route("/users", func(r chi.Router) {
-			r.Post("/", users.CreateUserHandler)
+			r.Put("/activate/{token}", users.ActivateUserHandler)
+
+			// r.Post("/", users.CreateUserHandler)
 		})
 	})
 

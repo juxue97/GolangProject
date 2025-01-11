@@ -16,4 +16,4 @@ migrate-down:
 .PHONY: gen-docs
 gen-docs:
 	@if not exist "docs" mkdir docs
-	@swag init -g cmd/api/main.go -o docs && swag fmt
+	@swag init -d ./cmd/api -o ./docs --parseDependency

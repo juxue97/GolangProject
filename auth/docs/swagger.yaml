@@ -1,3 +1,55 @@
+definitions:
+  auth.registerUserPayload:
+    properties:
+      email:
+        maxLength: 255
+        type: string
+      password:
+        maxLength: 13
+        minLength: 6
+        type: string
+      username:
+        maxLength: 100
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  auth.userWithToken:
+    properties:
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      password:
+        $ref: '#/definitions/repository.password'
+      role:
+        $ref: '#/definitions/repository.Role'
+      role_id:
+        type: integer
+      token:
+        type: string
+      username:
+        type: string
+    type: object
+  repository.Role:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      level:
+        type: string
+      name:
+        type: string
+    type: object
+  repository.password:
+    type: object
 info:
   contact:
     email: support@swagger.io
@@ -10,6 +62,34 @@ info:
   termsOfService: http://swagger.io/terms/
   title: Auth API
 paths:
+  /auth/user:
+    post:
+      consumes:
+      - application/json
+      description: Registers a user and send them an comfirmation email
+      parameters:
+      - description: User credentials
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/auth.registerUserPayload'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: User registered
+          schema:
+            $ref: '#/definitions/auth.userWithToken'
+        "400":
+          description: Bad Request
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Registers a user
+      tags:
+      - authentication
   /health:
     get:
       description: To perform server health check
@@ -27,6 +107,33 @@ paths:
       summary: Healthcheck
       tags:
       - Health Check
+  /users/activate/{token}:
+    put:
+      description: Activates a user by invitation token
+      parameters:
+      - description: Invitation token
+        in: path
+        name: token
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: User activated
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Activates a user account status
+      tags:
+      - users
 securityDefinitions:
   ApiKeyAuth:
     in: header
