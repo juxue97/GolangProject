@@ -39,6 +39,7 @@ func RegisterUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := common.Validate.Struct(payload); err != nil {
 		common.BadRequestResponse(w, r, err)
+		return
 	}
 
 	user := &repository.User{
@@ -51,6 +52,7 @@ func RegisterUserHandler(w http.ResponseWriter, r *http.Request) {
 	// hash password
 	if err := user.Password.SetPassword(payload.Password); err != nil {
 		common.InternalServerError(w, r, err)
+		return
 	}
 
 	// send activation email
@@ -61,7 +63,8 @@ func RegisterUserHandler(w http.ResponseWriter, r *http.Request) {
 	hash := sha256.Sum256([]byte(plainToken))
 	hashToken := hex.EncodeToString(hash[:])
 
-	if err := repository.Store.Users.CreateAndInvite(ctx, user, hashToken, config.Configs.Mail.Exp); err != nil {
+	err := repository.Store.Users.CreateAndInvite(ctx, user, hashToken, config.Configs.Mail.Exp)
+	if err != nil {
 		switch err {
 		case common.ErrUserAlreadyExists:
 			common.BadRequestResponse(w, r, err)
@@ -99,12 +102,14 @@ func RegisterUserHandler(w http.ResponseWriter, r *http.Request) {
 			common.Logger.Errorw("failed to delete user", "error", err)
 		}
 		common.InternalServerError(w, r, err)
+		return
 	}
 
 	common.Logger.Infow("comfirmation email sent", "status code", status)
 
 	if err := common.WriteJSON(w, http.StatusCreated, userWithToken); err != nil {
 		common.InternalServerError(w, r, err)
+		return
 	}
 }
 

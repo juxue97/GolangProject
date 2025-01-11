@@ -94,11 +94,6 @@ const docTemplate = `{
         },
         "/users/activate/{token}": {
             "put": {
-                "security": [
-                    {
-                        "ApiKeyAuth": []
-                    }
-                ],
                 "description": "Activates a user by invitation token",
                 "produces": [
                     "application/json"

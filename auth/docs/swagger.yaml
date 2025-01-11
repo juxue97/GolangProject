@@ -129,8 +129,6 @@ paths:
         "500":
           description: Internal Server Error
           schema: {}
-      security:
-      - ApiKeyAuth: []
       summary: Activates a user account status
       tags:
       - users

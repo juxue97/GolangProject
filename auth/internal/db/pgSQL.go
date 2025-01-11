@@ -10,15 +10,18 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var PgDB *sql.DB
+var (
+	PgDB *sql.DB
+	err  error
+)
 
 func init() {
-	PgDB, err := New(config.Configs.DB.Addr, config.Configs.DB.MaxOpenConns, config.Configs.DB.MaxIdleConns, config.Configs.DB.MaxIdleTime)
+	PgDB, err = New(config.Configs.DB.Addr, config.Configs.DB.MaxOpenConns, config.Configs.DB.MaxIdleConns, config.Configs.DB.MaxIdleTime)
 	if err != nil {
 		common.Logger.Fatal(err)
 	}
 
-	defer PgDB.Close()
+	// defer PgDB.Close()
 	common.Logger.Info("Pg database connection established")
 }
 

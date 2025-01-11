@@ -10,7 +10,7 @@ func init() {
 
 func newLogger() *zap.SugaredLogger {
 	logger := zap.Must(zap.NewProduction()).Sugar()
-	defer logger.Sync()
+	// defer logger.Sync()
 
 	return logger
 }

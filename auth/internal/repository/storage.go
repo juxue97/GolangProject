@@ -23,6 +23,9 @@ type Repository struct {
 }
 
 func NewRepository(db *sql.DB) *Repository {
+	if db == nil {
+		common.Logger.Fatal("PgDB is nil")
+	}
 	return &Repository{
 		Users: &UserStore{DB: db},
 	}

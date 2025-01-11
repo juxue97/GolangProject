@@ -3,7 +3,7 @@ package users
 import (
 	"net/http"
 
-	"github.com/go-chi/chi"
+	"github.com/go-chi/chi/v5" // remember to add v5
 	"github.com/juxue97/auth/internal/repository"
 	"github.com/juxue97/common"
 )
@@ -18,7 +18,6 @@ import (
 //	@Success		204		{string}	string	"User activated"
 //	@Failure		404		{object}	error
 //	@Failure		500		{object}	error
-//	@Security		ApiKeyAuth
 //	@Router			/users/activate/{token} [put]
 func ActivateUserHandler(w http.ResponseWriter, r *http.Request) {
 	token := chi.URLParam(r, "token")

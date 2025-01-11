@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/juxue97/auth/internal/config"
+	"github.com/juxue97/auth/internal/db"
 	"github.com/juxue97/common"
 )
 
@@ -23,7 +24,8 @@ import (
 func main() {
 	// Consume .env here
 	cfg := config.Configs
-
+	defer db.PgDB.Close()
+	defer common.Logger.Sync()
 	// logger := common.Logger
 
 	// db, err := db.New(cfg.DB.Addr, cfg.DB.MaxOpenConns, cfg.DB.MaxIdleConns, cfg.DB.MaxIdleTime)

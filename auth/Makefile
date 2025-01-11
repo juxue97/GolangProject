@@ -7,11 +7,11 @@ migration:
 
 .PHONY: migrate-up
 migrate-up:
-	@migrate -path=$(MIGRATIONS_PATH) -database=$(DB_MIGRATION_ADDR) up
+	@migrate -path=$(MIGRATIONS_PATH) -database=$(DB_ADDR) up
 
 .PHONY: migrate-down
 migrate-down:
-	@migrate -path=${MIGRATIONS_PATH} -database=$(DB_MIGRATION_ADDR) down $(filter-out $@,$(MAKECMDGOALS))
+	@migrate -path=${MIGRATIONS_PATH} -database=$(DB_ADDR) down $(filter-out $@,$(MAKECMDGOALS))
 
 .PHONY: gen-docs
 gen-docs:

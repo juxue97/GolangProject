@@ -48,19 +48,35 @@ type UserStore struct {
 }
 
 func (us *UserStore) Create(ctx context.Context, user *User) error {
-	query := `INSERT INTO users (username, email, password) VALUES ($1, $2, $3)`
+	query := `INSERT INTO users (username, email, password, role_id) VALUES ($1, $2, $3, (SELECT id FROM roles WHERE name = $4)) RETURNING id, created_at`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	role := user.Role.Name
+	if role == "" {
+		role = "user"
+	}
 
 	err := us.DB.QueryRowContext(
 		ctx,
 		query, user.Username,
 		user.Email,
-		user.Password,
+		user.Password.hash,
+		role,
 	).Scan(
 		&user.ID,
 		&user.CreatedAt,
 	)
 	if err != nil {
-		return err
+		switch {
+		case err.Error() == `pq: duplicate key value violates unique constraint "users_email_key"`:
+			return common.ErrEmailAlreadyExists
+		case err.Error() == `pq: duplicate key value violates unique constraint "users_username_key"`:
+			return common.ErrUserAlreadyExists
+		default:
+			return err
+		}
 	}
 	return nil
 }
@@ -74,7 +90,7 @@ func (us *UserStore) GetByEmail(ctx context.Context, email string) (*User, error
 }
 
 func (s *UserStore) createUserInvitation(ctx context.Context, tx *sql.Tx, token string, exp time.Duration, userID int64) error {
-	query := `INSERT INTO user_invitations (token, user_id, exp) VALUES ($1, $2, $3)`
+	query := `INSERT INTO user_invitations (token, user_id, expiry) VALUES ($1, $2, $3)`
 
 	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
 	defer cancel()
@@ -130,7 +146,6 @@ func (us *UserStore) getUserFromInvitation(ctx context.Context, tx *sql.Tx, toke
 		JOIN user_invitations ui ON u.id = ui.user_id
 		WHERE ui.token = $1 AND ui.expiry > $2
 	`
-
 	hash := sha256.Sum256([]byte(token))
 	hashToken := hex.EncodeToString(hash[:])
 

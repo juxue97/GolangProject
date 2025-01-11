@@ -27,5 +27,5 @@ func InternalServerError(w http.ResponseWriter, r *http.Request, err error) {
 func NotFoundError(w http.ResponseWriter, r *http.Request, err error) {
 	Logger.Warnf("Resource not found", "method", r.Method, "path", r.URL.Path, "error", err.Error())
 
-	WriteError(w, http.StatusInternalServerError, err.Error())
+	WriteError(w, http.StatusNotFound, err.Error())
 }

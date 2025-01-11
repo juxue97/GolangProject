@@ -17,6 +17,7 @@ const (
 	UserWelcomeInvitationTemplate = "user_invitation.tmpl"
 )
 
+//go:embed "templates"
 var fs embed.FS
 
 type Client interface {
@@ -44,7 +45,6 @@ func templateParsingAndBuilding(templateFile string, data any) (*bytes.Buffer, *
 	if err != nil {
 		return nil, nil, err
 	}
-
 	subject := new(bytes.Buffer)
 	err = tmpl.ExecuteTemplate(subject, "subject", data)
 	if err != nil {
@@ -56,6 +56,7 @@ func templateParsingAndBuilding(templateFile string, data any) (*bytes.Buffer, *
 	if err != nil {
 		return nil, nil, err
 	}
+
 	return subject, body, nil
 }
 

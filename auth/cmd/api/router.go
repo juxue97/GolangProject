@@ -33,6 +33,7 @@ func (app *application) mount() http.Handler {
 	r.Use(middleware.RealIP)
 	r.Use(middleware.Logger)
 	r.Use(middleware.Recoverer)
+
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{common.GetString("CORS_ALLOWED_ORIGIN", "http://localhost:3001")},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -42,6 +43,8 @@ func (app *application) mount() http.Handler {
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 	r.Use(middleware.Timeout(60 * time.Second))
+	r.Use(middleware.StripSlashes)
+
 	// apiVersion := fmt.Sprintf("/%s", version)
 	r.Route(basePath, func(r chi.Router) {
 		r.Get("/health", app.healthCheckHandler)
@@ -49,18 +52,21 @@ func (app *application) mount() http.Handler {
 		docsURL := fmt.Sprintf("%s/swagger/doc.json", app.config.Addr)
 		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(docsURL)))
 
+		// Users routes
+		r.Route("/users", func(r chi.Router) {
+			r.Put("/activate/{token}", users.ActivateUserHandler)
+		})
+
+		// Auth routes
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/user", auth.RegisterUserHandler)
 			// r.Post("/token", auth.CreateTokenHandler)
 		})
-
-		r.Route("/users", func(r chi.Router) {
-			r.Put("/activate/{token}", users.ActivateUserHandler)
-
-			// r.Post("/", users.CreateUserHandler)
-		})
 	})
-
+	// chi.Walk(r, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+	// 	fmt.Printf("Registered route: %s %s\n", method, route)
+	// 	return nil
+	// })
 	return r
 }
 
