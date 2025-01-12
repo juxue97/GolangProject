@@ -18,6 +18,9 @@ import (
 //	@Success		204		{string}	string	"User activated"
 //	@Failure		404		{object}	error
 //	@Failure		500		{object}	error
+//
+// @Security ApiKeyAuth
+//
 //	@Router			/users/activate/{token} [put]
 func ActivateUserHandler(w http.ResponseWriter, r *http.Request) {
 	token := chi.URLParam(r, "token")

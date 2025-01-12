@@ -1,4 +1,4 @@
-package middleware
+package authmiddleware
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/juxue97/auth/internal/authenticator"
+	"github.com/juxue97/auth/internal/cache"
 	"github.com/juxue97/auth/internal/config"
 	"github.com/juxue97/auth/internal/repository"
 	"github.com/juxue97/common"
@@ -66,11 +67,26 @@ func AuthTokenMiddleware(next http.Handler) http.Handler {
 }
 
 func getUser(ctx context.Context, userID int64) (*repository.User, error) {
+	// if redis is not enabled, retrieve from database
 	if !config.Configs.RedisCfg.Enabled {
 		return repository.Store.Users.GetByID(ctx, userID)
 	}
 
-	fmt.Println(ctx.Value(userCtx))
-	fmt.Println(userID)
-	return nil, nil
+	user, err := cache.CacheStorage.Users.Get(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// if no records is found, retrieve from database, then set to redis
+	if user == nil {
+		user, err := repository.Store.Users.GetByID(ctx, userID)
+		if err != nil {
+			return nil, err
+		}
+		if err := cache.CacheStorage.Users.Set(ctx, user); err != nil {
+			return nil, err
+		}
+	}
+
+	return user, nil
 }

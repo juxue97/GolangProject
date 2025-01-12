@@ -11,6 +11,7 @@ import (
 
 	"github.com/juxue97/auth/cmd/api/auth"
 	"github.com/juxue97/auth/cmd/api/users"
+	authmiddleware "github.com/juxue97/auth/cmd/middleware"
 	"github.com/juxue97/auth/internal/config"
 	"github.com/juxue97/common"
 
@@ -54,12 +55,14 @@ func (app *application) mount() http.Handler {
 
 		// Users routes
 		r.Route("/users", func(r chi.Router) {
+			r.Use(authmiddleware.AuthTokenMiddleware) // working , but fix the redix please
 			r.Put("/activate/{token}", users.ActivateUserHandler)
 		})
 
 		// Auth routes
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/user", auth.RegisterUserHandler)
+			// for the login api, it can be better if the token stored on the cookies
 			r.Post("/login", auth.LoginUserHandler)
 		})
 	})

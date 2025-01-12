@@ -52,6 +52,6 @@ func (j *JwtAuth) ValidateToken(token string) (*jwt.Token, error) {
 		jwt.WithExpirationRequired(),
 		jwt.WithAudience(j.aud),
 		jwt.WithIssuer(j.iss),
-		jwt.WithValidMethods([]string{jwt.SigningMethodES256.Name}),
+		jwt.WithValidMethods([]string{jwt.SigningMethodHS256.Name}),
 	)
 }
