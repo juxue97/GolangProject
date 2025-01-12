@@ -13,7 +13,7 @@ var (
 )
 
 func BadRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
-	Logger.Warnf("bad request", "method", r.Method, "path", r.URL.Path, "error", err.Error())
+	Logger.Warnf("Bad request", "method", r.Method, "path", r.URL.Path, "error", err.Error())
 
 	WriteError(w, http.StatusBadRequest, err.Error())
 }
@@ -32,6 +32,13 @@ func NotFoundError(w http.ResponseWriter, r *http.Request, err error) {
 
 func UnauthorizedError(w http.ResponseWriter, r *http.Request, err error) {
 	Logger.Warnf("Invalid credentials", "method", r.Method, "path", r.URL.Path, "error", err.Error())
+
+	WriteError(w, http.StatusUnauthorized, err.Error())
+}
+
+func UnauthorizedMiddlewareError(w http.ResponseWriter, r *http.Request, err error) {
+	Logger.Warnf("Unauthorized request", "method", r.Method, "path", r.URL.Path, "error", err.Error())
+	w.Header().Set("WWW-Authenticate", `Basic realm="restricted", charset="UTF-8"`)
 
 	WriteError(w, http.StatusUnauthorized, err.Error())
 }

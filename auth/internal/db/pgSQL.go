@@ -16,7 +16,7 @@ var (
 )
 
 func init() {
-	PgDB, err = New(config.Configs.DB.Addr, config.Configs.DB.MaxOpenConns, config.Configs.DB.MaxIdleConns, config.Configs.DB.MaxIdleTime)
+	PgDB, err = NewPgClient(config.Configs.DB.Addr, config.Configs.DB.MaxOpenConns, config.Configs.DB.MaxIdleConns, config.Configs.DB.MaxIdleTime)
 	if err != nil {
 		common.Logger.Fatal(err)
 	}
@@ -25,7 +25,7 @@ func init() {
 	common.Logger.Info("Pg database connection established")
 }
 
-func New(addr string, maxOpenConns int, maxIdleConns int, maxIdleTime string) (*sql.DB, error) {
+func NewPgClient(addr string, maxOpenConns int, maxIdleConns int, maxIdleTime string) (*sql.DB, error) {
 	db, err := sql.Open("postgres", addr)
 	if err != nil {
 		return nil, err

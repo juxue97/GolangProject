@@ -26,22 +26,9 @@ func main() {
 	cfg := config.Configs
 	defer db.PgDB.Close()
 	defer common.Logger.Sync()
-	// logger := common.Logger
-
-	// db, err := db.New(cfg.DB.Addr, cfg.DB.MaxOpenConns, cfg.DB.MaxIdleConns, cfg.DB.MaxIdleTime)
-	// if err != nil {
-	// 	logger.Fatal(err)
-	// }
-
-	// defer db.Close()
-	// logger.Info("Pg database connection established")
-
-	// store := repository.Store
 
 	app := &application{
 		config: cfg,
-		// store:  store,
-		// logger: logger,
 	}
 	mux := app.mount()
 

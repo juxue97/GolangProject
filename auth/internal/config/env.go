@@ -16,6 +16,7 @@ type Config struct {
 	Mail        types.MailConfig
 	FrontendURL string
 	Auth        types.AuthConfig
+	RedisCfg    types.RedisConfig
 }
 
 type pgDBConfig struct {
@@ -59,6 +60,12 @@ func init() {
 				Iss:    common.GetString("AUTH_TOKEN_ISSUER", "MehNohNahSuperAuth"),
 				Aud:    common.GetString("AUTH_TOKEN_AUDIENCE", "MehNohNahSuperAuth"),
 			},
+		},
+		RedisCfg: types.RedisConfig{
+			Addr:     common.GetString("REDIS_ADDR", "localhost:6379"),
+			Password: common.GetString("REDIS_PASSWORD", ""),
+			DB:       common.GetInt("REDIS_DB", 0),
+			Enabled:  common.GetBool("REDIS_ENABLED", false),
 		},
 	}
 }
