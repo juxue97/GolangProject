@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/juxue97/auth/internal/cache"
 	"github.com/juxue97/auth/internal/config"
 	"github.com/juxue97/auth/internal/db"
 	"github.com/juxue97/common"
@@ -26,7 +27,9 @@ func main() {
 	cfg := config.Configs
 	defer db.PgDB.Close()
 	defer common.Logger.Sync()
-
+	if cfg.RedisCfg.Enabled {
+		defer cache.RedisClient.Close()
+	}
 	app := &application{
 		config: cfg,
 	}

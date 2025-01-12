@@ -14,13 +14,19 @@ func NewRedisClient(addr, password string, db int) *redis.Client {
 	})
 }
 
-var RedisClient *redis.Client
+var (
+	RedisClient  *redis.Client
+	CacheStorage Storage
+)
 
 func init() {
-	RedisClient = NewRedisClient(
-		config.Configs.RedisCfg.Addr,
-		config.Configs.RedisCfg.Password,
-		config.Configs.RedisCfg.DB,
-	)
-	common.Logger.Info("Redis client initialized")
+	if config.Configs.RedisCfg.Enabled {
+		RedisClient = NewRedisClient(
+			config.Configs.RedisCfg.Addr,
+			config.Configs.RedisCfg.Password,
+			config.Configs.RedisCfg.DB,
+		)
+		CacheStorage = NewRedisStorage(RedisClient)
+		common.Logger.Info("Redis store initialized")
+	}
 }

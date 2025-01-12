@@ -35,7 +35,7 @@ var Store *Repository
 
 func init() {
 	Store = NewRepository(db.PgDB)
-	common.Logger.Info("Store initialized")
+	common.Logger.Info("PgStore initialized")
 }
 
 func withTx(db *sql.DB, ctx context.Context, fn func(*sql.Tx) error) error {
