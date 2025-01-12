@@ -7,10 +7,36 @@ services:
       POSTGRES_DB: auth
       POSTGRES_USER: juxue
       POSTGRES_PASSWORD: veryStrongPassword
+    networks:
+      - backend
     ports:
       - "3000:5432"
     volumes:
       - D:/database/golangPgData:/var/lib/postgresql/data
 
+  redis:
+    image: redis:7.4.2-alpine
+    restart: unless-stopped
+    container_name: redis
+    ports:
+      - "6379:6379"
+    command: redis-server --save 60 1 --loglevel warning
+
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: redis-commander
+    hostname: redis-commander
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8081:8081"
+    environment:
+      - REDIS_HOSTS=redis
+    depends_on:
+      - redis
+
 volumes:
-  pgdata:
+  golangPgData:
+
+networks:
+  backend:
+## add redis
