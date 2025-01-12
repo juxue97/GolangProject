@@ -1,11 +1,24 @@
 definitions:
+  auth.loginUserPayload:
+    properties:
+      email:
+        maxLength: 255
+        type: string
+      password:
+        maxLength: 20
+        minLength: 6
+        type: string
+    required:
+    - email
+    - password
+    type: object
   auth.registerUserPayload:
     properties:
       email:
         maxLength: 255
         type: string
       password:
-        maxLength: 13
+        maxLength: 20
         minLength: 6
         type: string
       username:
@@ -17,6 +30,24 @@ definitions:
     - username
     type: object
   auth.userWithToken:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/repository.User'
+    type: object
+  repository.Role:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      level:
+        type: string
+      name:
+        type: string
+    type: object
+  repository.User:
     properties:
       created_at:
         type: string
@@ -32,20 +63,7 @@ definitions:
         $ref: '#/definitions/repository.Role'
       role_id:
         type: integer
-      token:
-        type: string
       username:
-        type: string
-    type: object
-  repository.Role:
-    properties:
-      description:
-        type: string
-      id:
-        type: integer
-      level:
-        type: string
-      name:
         type: string
     type: object
   repository.password:
@@ -62,6 +80,37 @@ info:
   termsOfService: http://swagger.io/terms/
   title: Auth API
 paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Creates a token after successful login
+      parameters:
+      - description: User credentials
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/auth.loginUserPayload'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Token
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema: {}
+        "401":
+          description: Unauthorized
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Login user
+      tags:
+      - authentication
   /auth/user:
     post:
       consumes:

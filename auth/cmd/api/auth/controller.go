@@ -5,9 +5,12 @@ import (
 	"encoding/hex"
 	"fmt"
 	"net/http"
+	"time"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 
+	"github.com/juxue97/auth/internal/authenticator"
 	"github.com/juxue97/auth/internal/config"
 	"github.com/juxue97/auth/internal/mailer"
 	"github.com/juxue97/auth/internal/repository"
@@ -15,7 +18,7 @@ import (
 )
 
 type userWithToken struct {
-	*repository.User
+	User  *repository.User
 	Token string `json:"token"`
 }
 
@@ -113,9 +116,63 @@ func RegisterUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// func CreateTokenHandler(w http.ResponseWriter, r *http.Request) {
-// 	var paylod createTokenPayload
-// 	if err := common.ReadJSON(w, r, &paylod); err != nil {
-// 		common.BadRequestResponse(w, r, err)
-// 	}
-// }
+// createTokenHandler godoc
+//
+//	@Summary		Login user
+//	@Description	Creates a token after successful login
+//	@Tags			authentication
+//	@Accept			json
+//	@Produce		json
+//	@Param			payload	body		loginUserPayload	true	"User credentials"
+//	@Success		200		{string}	string					"Token"
+//	@Failure		400		{object}	error
+//	@Failure		401		{object}	error
+//	@Failure		500		{object}	error
+//	@Router			/auth/login [post]
+func LoginUserHandler(w http.ResponseWriter, r *http.Request) {
+	var payload loginUserPayload
+	if err := common.ReadJSON(w, r, &payload); err != nil {
+		common.BadRequestResponse(w, r, err)
+		return
+	}
+	if err := common.Validate.Struct(payload); err != nil {
+		common.BadRequestResponse(w, r, err)
+		return
+	}
+	user, err := repository.Store.Users.GetByEmail(r.Context(), payload.Email)
+	if err != nil {
+		switch err {
+		case common.ErrNotFound:
+			common.UnauthorizedError(w, r, err)
+		default:
+			common.InternalServerError(w, r, err)
+		}
+		return
+	}
+	match := user.Password.ComparePassword(payload.Password)
+	if !match {
+		common.Logger.Errorw("failed to compare password", "error", err)
+		common.UnauthorizedError(w, r, err)
+		return
+	}
+
+	// Generate JWT token, encode the user ID in it
+	claims := jwt.MapClaims{
+		"sub": user.ID,
+		"exp": time.Now().Add(config.Configs.Auth.Token.Exp).Unix(),
+		"iat": time.Now().Unix(),
+		"nbf": time.Now().Unix(),
+		"iss": config.Configs.Auth.Token.Iss,
+		"aud": config.Configs.Auth.Token.Aud,
+	}
+
+	token, err := authenticator.JwtAuthenticator.GenerateToken(claims)
+	if err != nil {
+		common.Logger.Errorw("failed to generate token", "error", err)
+		common.InternalServerError(w, r, err)
+		return
+	}
+	if err := common.WriteJSON(w, http.StatusCreated, token); err != nil {
+		common.InternalServerError(w, r, err)
+	}
+}

@@ -15,6 +15,7 @@ type Config struct {
 	DB          pgDBConfig
 	Mail        types.MailConfig
 	FrontendURL string
+	Auth        types.AuthConfig
 }
 
 type pgDBConfig struct {
@@ -51,5 +52,13 @@ func init() {
 			MaxIdleTime:  common.GetString("DB_MAX_IDLE_TIME", "15m"),
 		},
 		FrontendURL: common.GetString("FRONTEND_URL", "http://localhost:4000"),
+		Auth: types.AuthConfig{
+			Token: types.TokenConfig{
+				Secret: common.GetString("AUTH_TOKEN_SECRET", "secret"),
+				Exp:    time.Hour * 24 * time.Duration(common.GetInt("AUTH_TOKEN_EXPIRATION_DAYS", 3)),
+				Iss:    common.GetString("AUTH_TOKEN_ISSUER", "MehNohNahSuperAuth"),
+				Aud:    common.GetString("AUTH_TOKEN_AUDIENCE", "MehNohNahSuperAuth"),
+			},
+		},
 	}
 }

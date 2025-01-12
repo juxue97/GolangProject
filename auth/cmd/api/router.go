@@ -60,7 +60,7 @@ func (app *application) mount() http.Handler {
 		// Auth routes
 		r.Route("/auth", func(r chi.Router) {
 			r.Post("/user", auth.RegisterUserHandler)
-			// r.Post("/token", auth.CreateTokenHandler)
+			r.Post("/login", auth.LoginUserHandler)
 		})
 	})
 	// chi.Walk(r, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {

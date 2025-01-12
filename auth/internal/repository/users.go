@@ -23,7 +23,6 @@ type User struct {
 }
 
 type password struct {
-	text *string
 	hash []byte
 }
 
@@ -33,7 +32,6 @@ func (p *password) SetPassword(text string) error {
 		return err
 	}
 
-	p.text = &text
 	p.hash = hash
 
 	return nil
@@ -86,7 +84,33 @@ func (us *UserStore) GetByID(ctx context.Context, id int64) (*User, error) {
 }
 
 func (us *UserStore) GetByEmail(ctx context.Context, email string) (*User, error) {
-	return nil, nil
+	query := `SELECT id, username, email, password, created_at 
+	FROM users 
+	WHERE email = $1 AND is_active = true
+
+	`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	user := &User{}
+	err := us.DB.QueryRowContext(ctx, query, email).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.Password.hash,
+		&user.CreatedAt,
+	)
+	if err != nil {
+		switch err {
+		case sql.ErrNoRows:
+			return nil, common.ErrNotFound
+		default:
+			return nil, err
+		}
+	}
+
+	return user, nil
 }
 
 func (s *UserStore) createUserInvitation(ctx context.Context, tx *sql.Tx, token string, exp time.Duration, userID int64) error {

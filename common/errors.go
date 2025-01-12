@@ -29,3 +29,9 @@ func NotFoundError(w http.ResponseWriter, r *http.Request, err error) {
 
 	WriteError(w, http.StatusNotFound, err.Error())
 }
+
+func UnauthorizedError(w http.ResponseWriter, r *http.Request, err error) {
+	Logger.Warnf("Invalid credentials", "method", r.Method, "path", r.URL.Path, "error", err.Error())
+
+	WriteError(w, http.StatusUnauthorized, err.Error())
+}

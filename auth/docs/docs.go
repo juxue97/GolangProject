@@ -24,6 +24,52 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/auth/login": {
+            "post": {
+                "description": "Creates a token after successful login",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "authentication"
+                ],
+                "summary": "Login user",
+                "parameters": [
+                    {
+                        "description": "User credentials",
+                        "name": "payload",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/auth.loginUserPayload"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {}
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {}
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {}
+                    }
+                }
+            }
+        },
         "/auth/user": {
             "post": {
                 "description": "Registers a user and send them an comfirmation email",
@@ -131,6 +177,24 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "auth.loginUserPayload": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "password": {
+                    "type": "string",
+                    "maxLength": 20,
+                    "minLength": 6
+                }
+            }
+        },
         "auth.registerUserPayload": {
             "type": "object",
             "required": [
@@ -145,7 +209,7 @@ const docTemplate = `{
                 },
                 "password": {
                     "type": "string",
-                    "maxLength": 13,
+                    "maxLength": 20,
                     "minLength": 6
                 },
                 "username": {
@@ -155,6 +219,34 @@ const docTemplate = `{
             }
         },
         "auth.userWithToken": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                },
+                "user": {
+                    "$ref": "#/definitions/repository.User"
+                }
+            }
+        },
+        "repository.Role": {
+            "type": "object",
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "level": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "repository.User": {
             "type": "object",
             "properties": {
                 "created_at": {
@@ -178,27 +270,7 @@ const docTemplate = `{
                 "role_id": {
                     "type": "integer"
                 },
-                "token": {
-                    "type": "string"
-                },
                 "username": {
-                    "type": "string"
-                }
-            }
-        },
-        "repository.Role": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "level": {
-                    "type": "string"
-                },
-                "name": {
                     "type": "string"
                 }
             }
