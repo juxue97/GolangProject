@@ -13,10 +13,25 @@ import (
 // Role Middleware: Check the user role,
 func RoleMiddleware(requiredRole string, next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user := users.GetUserFromContext(r)
-		targetUser := users.GetTargetUserFromContext(r)
+		user, err := users.GetUserFromContext(r)
+		if err != nil {
+			common.ForbiddenError(w, r, err)
+			return
+		}
 
-		// if same, no need to check
+		// admin can do anything
+		if user.Role.Level >= 3 {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		targetUser, err := users.GetTargetUserFromContext(r)
+		if err != nil {
+			common.ForbiddenError(w, r, err)
+			return
+		}
+
+		// if same user, no need to check
 		if user.ID == targetUser.ID {
 			next.ServeHTTP(w, r)
 			return
@@ -31,6 +46,7 @@ func RoleMiddleware(requiredRole string, next http.HandlerFunc) http.HandlerFunc
 			common.ForbiddenError(w, r, fmt.Errorf("forbidden action"))
 			return
 		}
+		fmt.Println("?????????????")
 		next.ServeHTTP(w, r)
 	})
 }

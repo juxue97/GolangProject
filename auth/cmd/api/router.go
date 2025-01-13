@@ -73,13 +73,13 @@ func (app *application) mount() http.Handler {
 			r.Group(func(r chi.Router) {
 				r.Use(middlewares.AuthTokenMiddleware)
 				// Get all users
-				r.Get("/", middlewares.RoleMiddleware("admin", users.ActivateUserHandler)) // foo
+				r.Get("/", middlewares.RoleMiddleware("admin", users.GetUsersHandler))
 
 				r.Route("/{id}", func(r chi.Router) {
 					r.Use(middlewares.UsersContextMiddleware)
-					r.Get("/", users.ActivateUserHandler) // foo
-					// r.Put("/", users.UpdateUserHandler)
-					// r.Delete("/", users.DeleteUserHandler)
+					r.Get("/", middlewares.RoleMiddleware("admin", users.GetUserHandler))
+					r.Put("/", middlewares.RoleMiddleware("admin", users.UpdateUserHandler))
+					r.Delete("/", middlewares.RoleMiddleware("admin", users.DeleteUserHandler))
 				})
 			})
 

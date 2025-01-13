@@ -11,6 +11,7 @@ var (
 	ErrEmailAlreadyExists = errors.New("email already exists")
 	ErrNotFound           = errors.New("user not found")
 	ErrExceededLimit      = errors.New("rate limit exceeded")
+	ErrContextNotFound    = errors.New("target user not found in context")
 )
 
 func BadRequestResponse(w http.ResponseWriter, r *http.Request, err error) {

@@ -14,8 +14,11 @@ var QueryTimeoutDuration = time.Second * 5
 type Repository struct {
 	Users interface {
 		Create(context.Context, *User) error
+		GetAll(context.Context) ([]User, error)
 		GetByID(context.Context, int64) (*User, error)
 		GetByEmail(context.Context, string) (*User, error)
+		Update(context.Context, *User) error
+		DeleteUser(context.Context, int64) error
 		CreateAndInvite(context.Context, *User, string, time.Duration) error
 		ActivateUser(context.Context, string) error
 		Delete(context.Context, int64) error

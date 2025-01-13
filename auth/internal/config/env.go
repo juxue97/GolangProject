@@ -66,6 +66,7 @@ func init() {
 			Addr:     common.GetString("REDIS_ADDR", "localhost:6379"),
 			Password: common.GetString("REDIS_PASSWORD", ""),
 			DB:       common.GetInt("REDIS_DB", 0),
+			TTL:      time.Minute * time.Duration(common.GetInt("REDIS_TTL", 1)),
 			Enabled:  common.GetBool("REDIS_ENABLED", false),
 		},
 		RateLimit: types.RateLimitConfig{

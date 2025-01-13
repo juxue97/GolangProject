@@ -28,7 +28,7 @@ func AuthTokenMiddleware(next http.Handler) http.Handler {
 
 		parts := strings.Split(getHeader, " ")
 		if len(parts) != 2 || parts[0] != "Bearer" {
-			common.UnauthorizedMiddlewareError(w, r, fmt.Errorf("Authorization header is malformed"))
+			common.UnauthorizedMiddlewareError(w, r, fmt.Errorf("authorization header is malformed"))
 			return
 		}
 

@@ -6,7 +6,7 @@ import (
 )
 
 type Role struct {
-	ID          int64  `json:"id"`
+	ID          int64  `json:"-"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Level       int    `json:"level"`

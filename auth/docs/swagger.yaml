@@ -40,8 +40,6 @@ definitions:
     properties:
       description:
         type: string
-      id:
-        type: integer
       level:
         type: integer
       name:
@@ -57,16 +55,15 @@ definitions:
         type: integer
       is_active:
         type: boolean
-      password:
-        $ref: '#/definitions/repository.password'
       role:
         $ref: '#/definitions/repository.Role'
-      role_id:
-        type: integer
       username:
         type: string
     type: object
-  repository.password:
+  users.UpdateUserPayload:
+    properties:
+      testing:
+        type: string
     type: object
 info:
   contact:
@@ -156,6 +153,114 @@ paths:
       summary: Healthcheck
       tags:
       - Health Check
+  /users/:
+    get:
+      description: Retrieve all users
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/repository.User'
+            type: array
+        "404":
+          description: Not Found
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Retrieve all users
+      tags:
+      - users
+  /users/{id}:
+    delete:
+      description: Delete user by id
+      parameters:
+      - description: User id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: User deleted
+          schema:
+            type: string
+        "404":
+          description: Not Found
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Delete user
+      tags:
+      - users
+    get:
+      description: Retrieve single user information by id
+      parameters:
+      - description: User id
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/repository.User'
+        "404":
+          description: Not Found
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Retrieve single user information
+      tags:
+      - users
+    put:
+      description: Update user by id
+      parameters:
+      - description: User id
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Post payload
+        in: body
+        name: payload
+        required: true
+        schema:
+          $ref: '#/definitions/users.UpdateUserPayload'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/repository.User'
+        "404":
+          description: Not Found
+          schema: {}
+        "500":
+          description: Internal Server Error
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: Update user
+      tags:
+      - users
   /users/activate/{token}:
     put:
       description: Activates a user by invitation token
@@ -178,8 +283,6 @@ paths:
         "500":
           description: Internal Server Error
           schema: {}
-      security:
-      - ApiKeyAuth: []
       summary: Activates a user account status
       tags:
       - users

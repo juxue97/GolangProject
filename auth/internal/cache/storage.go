@@ -12,7 +12,7 @@ type Storage struct {
 	Users interface {
 		Get(context.Context, int64) (*repository.User, error)
 		Set(context.Context, *repository.User) error
-		Delete(context.Context, int64)
+		Delete(context.Context, int64) error
 	}
 	RateLimiter interface {
 		Count(context.Context, string, int, time.Duration) (bool, error)

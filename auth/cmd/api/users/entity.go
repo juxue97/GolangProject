@@ -5,3 +5,8 @@ package users
 // 	Email    string `json:"email"`
 // 	Password string `json:"password"`
 // }
+
+type UpdateUserPayload struct {
+	Email    string `json:"email"`
+	Username string `json:"username"`
+}

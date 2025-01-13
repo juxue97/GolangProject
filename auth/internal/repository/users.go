@@ -15,8 +15,8 @@ type User struct {
 	ID        int64    `json:"id"`
 	Username  string   `json:"username"`
 	Email     string   `json:"email"`
-	Password  password `json:"password"`
-	RoleID    int64    `json:"role_id"`
+	Password  password `json:"-"`
+	RoleID    int64    `json:"-"`
 	Role      Role     `json:"role"`
 	CreatedAt string   `json:"created_at"`
 	IsActive  bool     `json:"is_active"`
@@ -77,6 +77,43 @@ func (us *UserStore) Create(ctx context.Context, user *User) error {
 		}
 	}
 	return nil
+}
+
+func (us *UserStore) GetAll(ctx context.Context) ([]User, error) {
+	query := `SELECT users.id, username, email, created_at, is_active, roles."name", roles."level", roles.description
+	FROM users
+	JOIN roles ON users.role_id = roles.id
+	`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	rows, err := us.DB.QueryContext(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := []User{}
+	for rows.Next() {
+		user := User{}
+		err := rows.Scan(
+			&user.ID,
+			&user.Username,
+			&user.Email,
+			&user.CreatedAt,
+			&user.IsActive,
+			&user.Role.Name,
+			&user.Role.Level,
+			&user.Role.Description,
+		)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+
+	return users, nil
 }
 
 func (us *UserStore) GetByID(ctx context.Context, id int64) (*User, error) {
@@ -225,6 +262,23 @@ func (us *UserStore) getUserFromInvitation(ctx context.Context, tx *sql.Tx, toke
 	return user, nil
 }
 
+func (us *UserStore) Update(ctx context.Context, user *User) error {
+	query := `UPDATE users SET 
+	username = COALESCE($1, username), 
+	email = COALESCE($2, email)
+	WHERE id = $3
+	`
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	_, err := us.DB.ExecContext(ctx, query, user.Username, user.Email, user.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (us *UserStore) update(ctx context.Context, tx *sql.Tx, user *User) error {
 	query := `UPDATE users SET username = $1, email = $2, is_active = $3 WHERE id = $4`
 
@@ -232,6 +286,20 @@ func (us *UserStore) update(ctx context.Context, tx *sql.Tx, user *User) error {
 	defer cancel()
 
 	_, err := tx.ExecContext(ctx, query, user.Username, user.Email, user.IsActive, user.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (us *UserStore) DeleteUser(ctx context.Context, id int64) error {
+	query := `DELETE FROM users WHERE id = $1`
+
+	ctx, cancel := context.WithTimeout(ctx, QueryTimeoutDuration)
+	defer cancel()
+
+	_, err := us.DB.ExecContext(ctx, query, id)
 	if err != nil {
 		return err
 	}

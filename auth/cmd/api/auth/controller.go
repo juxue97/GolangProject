@@ -151,8 +151,8 @@ func LoginUserHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	match := user.Password.ComparePassword(payload.Password)
 	if !match {
-		common.Logger.Errorw("failed to compare password", "error", err)
-		common.UnauthorizedError(w, r, err)
+		common.Logger.Errorw("failed to compare password")
+		common.UnauthorizedError(w, r, fmt.Errorf("failed to compare password"))
 		return
 	}
 
