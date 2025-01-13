@@ -41,3 +41,9 @@ func UnauthorizedMiddlewareError(w http.ResponseWriter, r *http.Request, err err
 
 	WriteError(w, http.StatusUnauthorized, err.Error())
 }
+
+func ForbiddenError(w http.ResponseWriter, r *http.Request, err error) {
+	Logger.Warnf("Forbidden action", "method", r.Method, "path", r.URL.Path, "error", err.Error())
+
+	WriteError(w, http.StatusForbidden, err.Error())
+}

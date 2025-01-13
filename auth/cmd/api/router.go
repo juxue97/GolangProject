@@ -11,7 +11,7 @@ import (
 
 	"github.com/juxue97/auth/cmd/api/auth"
 	"github.com/juxue97/auth/cmd/api/users"
-	authmiddleware "github.com/juxue97/auth/cmd/middleware"
+	middlewares "github.com/juxue97/auth/cmd/middleware"
 	"github.com/juxue97/auth/internal/config"
 	"github.com/juxue97/common"
 
@@ -53,17 +53,39 @@ func (app *application) mount() http.Handler {
 		docsURL := fmt.Sprintf("%s/swagger/doc.json", app.config.Addr)
 		r.Get("/swagger/*", httpSwagger.Handler(httpSwagger.URL(docsURL)))
 
-		// Users routes
-		r.Route("/users", func(r chi.Router) {
-			r.Use(authmiddleware.AuthTokenMiddleware) // working , but fix the redix please
-			r.Put("/activate/{token}", users.ActivateUserHandler)
+		// Auth routes
+		// Public apis
+		r.Route("/auth", func(r chi.Router) {
+			// Register a new user
+			r.Post("/user", auth.RegisterUserHandler)
+			// Login user, it can be better if the token stored on the cookies
+			r.Post("/login", auth.LoginUserHandler)
 		})
 
-		// Auth routes
-		r.Route("/auth", func(r chi.Router) {
-			r.Post("/user", auth.RegisterUserHandler)
-			// for the login api, it can be better if the token stored on the cookies
-			r.Post("/login", auth.LoginUserHandler)
+		// Users routes
+		// Private apis
+		r.Route("/users", func(r chi.Router) {
+			// Activate the user account
+			r.Put("/activate/{token}", users.ActivateUserHandler)
+
+			// Get all users
+			// r.Get("/", middlewares.RoleMiddleware("admin", users.GetUsersHandler))
+
+			r.Use(middlewares.AuthTokenMiddleware)
+			r.Route("/{id}", func(r chi.Router) {
+				r.Use(middlewares.UsersContextMiddleware)
+				// r.Get("/", users.GetUserHandler)
+				// r.Put("/", users.UpdateUserHandler)
+				// r.Delete("/", users.DeleteUserHandler)
+			})
+			// Get all users
+			// r.Get("/", users.GetUsersHandler)
+			// Get a user
+			// r.Get("/{id}", users.GetUserHandler)
+			// Update a user
+			// r.Put("/{id}", users.UpdateUserHandler)
+			// Delete a user
+			// r.Delete("/{id}", users.DeleteUserHandler)
 		})
 	})
 	// chi.Walk(r, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {

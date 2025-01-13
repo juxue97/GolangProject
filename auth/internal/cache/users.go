@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	cacheTTL = time.Minute
+	cacheTTL = time.Minute * 30
 )
 
 type UserStore struct {

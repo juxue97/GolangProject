@@ -8,6 +8,16 @@ import (
 	"github.com/juxue97/common"
 )
 
+type (
+	userKey       string
+	targetUserKey string
+)
+
+const (
+	UserCtx       userKey       = "user"
+	TargetUserCtx targetUserKey = "targetUser"
+)
+
 // ActivateUser godoc
 //
 //	@Summary		Activates a user account status
@@ -38,4 +48,14 @@ func ActivateUserHandler(w http.ResponseWriter, r *http.Request) {
 	if err := common.WriteJSON(w, http.StatusNoContent, ""); err != nil {
 		common.InternalServerError(w, r, err)
 	}
+}
+
+func GetUserFromContext(r *http.Request) *repository.User {
+	user, _ := r.Context().Value(UserCtx).(*repository.User)
+	return user
+}
+
+func GetTargetUserFromContext(r *http.Request) *repository.User {
+	user, _ := r.Context().Value(TargetUserCtx).(*repository.User)
+	return user
 }

@@ -20,6 +20,9 @@ type Repository struct {
 		ActivateUser(context.Context, string) error
 		Delete(context.Context, int64) error
 	}
+	Roles interface {
+		GetByName(context.Context, string) (*Role, error)
+	}
 }
 
 func NewRepository(db *sql.DB) *Repository {
@@ -28,6 +31,7 @@ func NewRepository(db *sql.DB) *Repository {
 	}
 	return &Repository{
 		Users: &UserStore{DB: db},
+		Roles: &RoleStore{DB: db},
 	}
 }
 

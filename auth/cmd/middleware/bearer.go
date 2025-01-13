@@ -1,4 +1,4 @@
-package authmiddleware
+package middlewares
 
 import (
 	"context"
@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/juxue97/auth/cmd/api/users"
 	"github.com/juxue97/auth/internal/authenticator"
 	"github.com/juxue97/auth/internal/cache"
 	"github.com/juxue97/auth/internal/config"
@@ -15,12 +16,7 @@ import (
 	"github.com/juxue97/common"
 )
 
-type userKey string
-
-const (
-	userCtx userKey = "user"
-)
-
+// JWT Middleware to validate token
 func AuthTokenMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Get the authorization header
@@ -59,9 +55,8 @@ func AuthTokenMiddleware(next http.Handler) http.Handler {
 			common.UnauthorizedMiddlewareError(w, r, err)
 			return
 		}
-
 		// Add the user to the context
-		ctx = context.WithValue(ctx, userCtx, user)
+		ctx = context.WithValue(ctx, users.UserCtx, user)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
