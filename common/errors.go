@@ -10,6 +10,7 @@ var (
 	ErrUserAlreadyExists  = errors.New("user already exists")
 	ErrEmailAlreadyExists = errors.New("email already exists")
 	ErrNotFound           = errors.New("user not found")
+	ErrExceededLimit      = errors.New("rate limit exceeded")
 )
 
 func BadRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
@@ -46,4 +47,11 @@ func ForbiddenError(w http.ResponseWriter, r *http.Request, err error) {
 	Logger.Warnf("Forbidden action", "method", r.Method, "path", r.URL.Path, "error", err.Error())
 
 	WriteError(w, http.StatusForbidden, err.Error())
+}
+
+func TooManyRequestsError(w http.ResponseWriter, r *http.Request, retryAfter string) {
+	Logger.Warnf("Rate limit exceeded", "method", r.Method, "path", r.URL.Path)
+	w.Header().Set("Retry-After", retryAfter)
+
+	WriteError(w, http.StatusTooManyRequests, "rate limit exceeded, retry after: "+retryAfter+"s")
 }

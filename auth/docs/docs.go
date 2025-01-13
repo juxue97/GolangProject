@@ -244,7 +244,7 @@ const docTemplate = `{
                     "type": "integer"
                 },
                 "level": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "name": {
                     "type": "string"

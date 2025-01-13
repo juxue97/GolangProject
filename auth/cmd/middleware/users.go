@@ -28,6 +28,6 @@ func UsersContextMiddleware(next http.Handler) http.Handler {
 
 		ctx = context.WithValue(ctx, users.TargetUserCtx, user)
 
-		next.ServeHTTP(w, r)
+		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }

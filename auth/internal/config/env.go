@@ -17,6 +17,7 @@ type Config struct {
 	FrontendURL string
 	Auth        types.AuthConfig
 	RedisCfg    types.RedisConfig
+	RateLimit   types.RateLimitConfig
 }
 
 type pgDBConfig struct {
@@ -66,6 +67,11 @@ func init() {
 			Password: common.GetString("REDIS_PASSWORD", ""),
 			DB:       common.GetInt("REDIS_DB", 0),
 			Enabled:  common.GetBool("REDIS_ENABLED", false),
+		},
+		RateLimit: types.RateLimitConfig{
+			Limit:   common.GetInt("RATE_LIMIT", 20),
+			Window:  time.Minute * time.Duration(common.GetInt("RATE_LIMIT_WINDOW", 1)),
+			Enabled: common.GetBool("RATE_LIMIT_ENABLED", false),
 		},
 	}
 }

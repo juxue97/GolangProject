@@ -48,6 +48,9 @@ func (app *application) mount() http.Handler {
 
 	// apiVersion := fmt.Sprintf("/%s", version)
 	r.Route(basePath, func(r chi.Router) {
+		if config.Configs.RateLimit.Enabled {
+			r.Use(middlewares.RateLimiterMiddleware)
+		}
 		r.Get("/health", app.healthCheckHandler)
 
 		docsURL := fmt.Sprintf("%s/swagger/doc.json", app.config.Addr)
@@ -67,17 +70,19 @@ func (app *application) mount() http.Handler {
 		r.Route("/users", func(r chi.Router) {
 			// Activate the user account
 			r.Put("/activate/{token}", users.ActivateUserHandler)
+			r.Group(func(r chi.Router) {
+				r.Use(middlewares.AuthTokenMiddleware)
+				// Get all users
+				r.Get("/", middlewares.RoleMiddleware("admin", users.ActivateUserHandler)) // foo
 
-			// Get all users
-			// r.Get("/", middlewares.RoleMiddleware("admin", users.GetUsersHandler))
-
-			r.Use(middlewares.AuthTokenMiddleware)
-			r.Route("/{id}", func(r chi.Router) {
-				r.Use(middlewares.UsersContextMiddleware)
-				// r.Get("/", users.GetUserHandler)
-				// r.Put("/", users.UpdateUserHandler)
-				// r.Delete("/", users.DeleteUserHandler)
+				r.Route("/{id}", func(r chi.Router) {
+					r.Use(middlewares.UsersContextMiddleware)
+					r.Get("/", users.ActivateUserHandler) // foo
+					// r.Put("/", users.UpdateUserHandler)
+					// r.Delete("/", users.DeleteUserHandler)
+				})
 			})
+
 			// Get all users
 			// r.Get("/", users.GetUsersHandler)
 			// Get a user
