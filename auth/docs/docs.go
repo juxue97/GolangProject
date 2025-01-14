@@ -285,10 +285,10 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK",
+                    "204": {
+                        "description": "User updated",
                         "schema": {
-                            "$ref": "#/definitions/repository.User"
+                            "type": "string"
                         }
                     },
                     "404": {
@@ -436,7 +436,10 @@ const docTemplate = `{
         "users.UpdateUserPayload": {
             "type": "object",
             "properties": {
-                "testing": {
+                "email": {
+                    "type": "string"
+                },
+                "username": {
                     "type": "string"
                 }
             }

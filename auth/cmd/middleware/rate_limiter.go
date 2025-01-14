@@ -1,7 +1,6 @@
 package middlewares
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -17,7 +16,7 @@ func RateLimiterMiddleware(next http.Handler) http.Handler {
 		limit := config.Configs.RateLimit.Limit
 		window := config.Configs.RateLimit.Window
 		// Apply rate limiting
-		allowed, err := cache.CacheStorage.RateLimiter.Count(r.Context(), ip, limit, window)
+		allowed, err := cache.RateLimitStorage.RateLimiter.Count(r.Context(), ip, limit, window)
 		if err != nil {
 			common.InternalServerError(w, r, err)
 			return
@@ -25,14 +24,13 @@ func RateLimiterMiddleware(next http.Handler) http.Handler {
 
 		if !allowed {
 			// Get the TTL of the rate limit key
-			ttl, err := cache.CacheStorage.RateLimiter.GetRemainTime(r.Context(), ip)
+			ttl, err := cache.RateLimitStorage.RateLimiter.GetRemainTime(r.Context(), ip)
 			if err != nil {
 				common.InternalServerError(w, r, err)
 				return
 			}
 			// Format the retry-after duration
 			retryAfter := int(ttl.Seconds())
-			fmt.Println(retryAfter)
 			if retryAfter < 0 {
 				retryAfter = int(window.Seconds()) // Fallback to default window if TTL isn't available
 			}

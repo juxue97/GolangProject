@@ -70,6 +70,7 @@ func init() {
 			Enabled:  common.GetBool("REDIS_ENABLED", false),
 		},
 		RateLimit: types.RateLimitConfig{
+			DB:      common.GetInt("RATE_LIMIT_DB", 1),
 			Limit:   common.GetInt("RATE_LIMIT", 20),
 			Window:  time.Minute * time.Duration(common.GetInt("RATE_LIMIT_WINDOW", 1)),
 			Enabled: common.GetBool("RATE_LIMIT_ENABLED", false),

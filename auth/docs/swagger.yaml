@@ -62,7 +62,9 @@ definitions:
     type: object
   users.UpdateUserPayload:
     properties:
-      testing:
+      email:
+        type: string
+      username:
         type: string
     type: object
 info:
@@ -246,10 +248,10 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "204":
+          description: User updated
           schema:
-            $ref: '#/definitions/repository.User'
+            type: string
         "404":
           description: Not Found
           schema: {}

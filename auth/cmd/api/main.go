@@ -29,6 +29,9 @@ func main() {
 	defer common.Logger.Sync()
 	if cfg.RedisCfg.Enabled {
 		defer cache.RedisClient.Close()
+		if cfg.RateLimit.Enabled {
+			defer cache.RateLimitClient.Close()
+		}
 	}
 	app := &application{
 		config: cfg,
