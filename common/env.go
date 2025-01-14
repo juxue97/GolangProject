@@ -1,6 +1,7 @@
 package common
 
 import (
+	"log"
 	"os"
 	"strconv"
 
@@ -10,8 +11,9 @@ import (
 func init() {
 	err := godotenv.Load()
 	if err != nil {
-		Logger.Fatal("Error loading .env file")
+		log.Fatal("Error loading .env file")
 	}
+	log.Printf("Environment variables loaded")
 }
 
 func GetString(key string, fallback string) string {

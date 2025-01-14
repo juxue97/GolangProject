@@ -1,0 +1,25 @@
+package common
+
+import "go.uber.org/zap"
+
+var Logger *zap.SugaredLogger
+
+func init() {
+	Logger = newLogger(false)
+}
+
+func newLogger(development bool) *zap.SugaredLogger {
+	var logger *zap.Logger
+	var err error
+
+	if development {
+		logger, err = zap.NewDevelopment()
+	} else {
+		logger, err = zap.NewProduction()
+	}
+
+	if err != nil {
+		panic(err)
+	}
+	return logger.Sugar()
+}
