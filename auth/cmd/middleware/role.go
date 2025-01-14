@@ -5,15 +5,20 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/juxue97/auth/cmd/api/users"
 	"github.com/juxue97/auth/internal/repository"
 	"github.com/juxue97/common"
 )
 
+// type RoleMiddlewareService struct{}
+
+// func NewRoleMiddlewareService() *RoleMiddlewareService {
+// 	return &RoleMiddlewareService{}
+// }
+
 // Role Middleware: Check the user role,
-func RoleMiddleware(requiredRole string, next http.HandlerFunc) http.HandlerFunc {
+func (s *MiddlewareService) RoleMiddleware(requiredRole string, next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		user, err := users.GetUserFromContext(r)
+		user, err := s.GetUserFromContext(r)
 		if err != nil {
 			common.ForbiddenError(w, r, err)
 			return
@@ -25,7 +30,7 @@ func RoleMiddleware(requiredRole string, next http.HandlerFunc) http.HandlerFunc
 			return
 		}
 
-		targetUser, err := users.GetTargetUserFromContext(r)
+		targetUser, err := s.GetTargetUserFromContext(r)
 		if err != nil {
 			common.ForbiddenError(w, r, err)
 			return
@@ -37,7 +42,7 @@ func RoleMiddleware(requiredRole string, next http.HandlerFunc) http.HandlerFunc
 			return
 		}
 
-		allowed, err := checkRolePrecedence(r.Context(), user, requiredRole)
+		allowed, err := s.checkRolePrecedence(r.Context(), user, requiredRole)
 		if err != nil {
 			common.InternalServerError(w, r, err)
 			return
@@ -46,14 +51,13 @@ func RoleMiddleware(requiredRole string, next http.HandlerFunc) http.HandlerFunc
 			common.ForbiddenError(w, r, fmt.Errorf("forbidden action"))
 			return
 		}
-		fmt.Println("?????????????")
 		next.ServeHTTP(w, r)
 	})
 }
 
-func checkRolePrecedence(ctx context.Context, user *repository.User, requiredRole string) (bool, error) {
+func (s *MiddlewareService) checkRolePrecedence(ctx context.Context, user *repository.User, requiredRole string) (bool, error) {
 	// Retrieve the required role if from database
-	role, err := repository.Store.Roles.GetByName(ctx, requiredRole)
+	role, err := s.PgStore.Roles.GetByName(ctx, requiredRole)
 	if err != nil {
 		return false, err
 	}

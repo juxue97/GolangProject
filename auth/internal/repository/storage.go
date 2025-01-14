@@ -3,10 +3,8 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"log"
 	"time"
-
-	"github.com/juxue97/auth/internal/db"
-	"github.com/juxue97/common"
 )
 
 var QueryTimeoutDuration = time.Second * 5
@@ -30,19 +28,12 @@ type Repository struct {
 
 func NewRepository(db *sql.DB) *Repository {
 	if db == nil {
-		common.Logger.Fatal("PgDB is nil")
+		log.Fatal("PgDB is nil")
 	}
 	return &Repository{
 		Users: &UserStore{DB: db},
 		Roles: &RoleStore{DB: db},
 	}
-}
-
-var Store *Repository
-
-func init() {
-	Store = NewRepository(db.PgDB)
-	common.Logger.Info("PgStore initialized")
 }
 
 func withTx(db *sql.DB, ctx context.Context, fn func(*sql.Tx) error) error {

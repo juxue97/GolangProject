@@ -1,24 +1,14 @@
 package common
 
 import (
-	"os"
-
 	"go.uber.org/zap"
 )
 
-var Logger *zap.SugaredLogger
-
-func init() {
-	Logger = newLogger()
-	Logger.Info("Logger initialized. ", "Environment: ", GetString("ENV", "development"))
-}
-
-func newLogger() *zap.SugaredLogger {
-	// Check environment to determine logger type
-	development := os.Getenv("ENV") == "development"
-
+func NewLogger(env string) *zap.SugaredLogger {
 	var logger *zap.Logger
 	var err error
+
+	development := env == "development"
 
 	if development {
 		logger, err = zap.NewDevelopment()

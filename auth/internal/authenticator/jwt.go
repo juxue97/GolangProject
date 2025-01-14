@@ -2,20 +2,21 @@ package authenticator
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/juxue97/auth/internal/config"
-	"github.com/juxue97/common"
 )
 
 type JwtAuth struct {
+	exp    time.Duration
 	secret string
 	aud    string
 	iss    string
 }
 
-func NewJwtAuth(secret string, aud string, iss string) *JwtAuth {
+func NewJwtAuth(exp time.Duration, secret string, aud string, iss string) *JwtAuth {
 	return &JwtAuth{
+		exp:    exp,
 		secret: secret,
 		iss:    iss,
 		aud:    aud,
@@ -23,15 +24,6 @@ func NewJwtAuth(secret string, aud string, iss string) *JwtAuth {
 }
 
 var JwtAuthenticator *JwtAuth
-
-func init() {
-	JwtAuthenticator = NewJwtAuth(
-		config.Configs.Auth.Token.Secret,
-		config.Configs.Auth.Token.Iss,
-		config.Configs.Auth.Token.Aud,
-	)
-	common.Logger.Info("JwtAuthenticator initialized")
-}
 
 func (j *JwtAuth) GenerateToken(claims jwt.Claims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

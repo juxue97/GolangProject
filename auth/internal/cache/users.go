@@ -4,16 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/go-redis/redis/v8"
-	"github.com/juxue97/auth/internal/config"
 	"github.com/juxue97/auth/internal/repository"
 )
 
-var cacheTTL = config.Configs.RedisCfg.TTL
-
 type UserStore struct {
 	rdb *redis.Client
+	ttl time.Duration
 }
 
 func (us *UserStore) Get(ctx context.Context, userID int64) (*repository.User, error) {
@@ -41,15 +40,15 @@ func (us *UserStore) Set(ctx context.Context, user *repository.User) error {
 	if err != nil {
 		return err
 	}
-	return us.rdb.SetEX(ctx, cacheKey, json, cacheTTL).Err()
+	return us.rdb.SetEX(ctx, cacheKey, json, us.ttl).Err()
 }
 
 func (us *UserStore) Delete(ctx context.Context, userID int64) error {
 	cacheKey := fmt.Sprintf("user-%d", userID)
 
-	err := us.rdb.Del(ctx, cacheKey)
+	err := us.rdb.Del(ctx, cacheKey).Err()
 	if err != nil {
-		return fmt.Errorf("failed to delete user from cache: %w", err)
+		return fmt.Errorf("failed to delete user from cache: %d", err)
 	}
 
 	return nil

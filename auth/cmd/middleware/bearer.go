@@ -8,16 +8,12 @@ import (
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/juxue97/auth/cmd/api/users"
-	"github.com/juxue97/auth/internal/authenticator"
-	"github.com/juxue97/auth/internal/cache"
-	"github.com/juxue97/auth/internal/config"
 	"github.com/juxue97/auth/internal/repository"
 	"github.com/juxue97/common"
 )
 
 // JWT Middleware to validate token
-func AuthTokenMiddleware(next http.Handler) http.Handler {
+func (s *MiddlewareService) AuthTokenMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Get the authorization header
 		getHeader := r.Header.Get("Authorization")
@@ -34,7 +30,7 @@ func AuthTokenMiddleware(next http.Handler) http.Handler {
 
 		// Get the token
 		token := parts[1]
-		jwtToken, err := authenticator.JwtAuthenticator.ValidateToken(token)
+		jwtToken, err := s.authenticator.ValidateToken(token)
 		if err != nil {
 			common.UnauthorizedMiddlewareError(w, r, err)
 			return
@@ -50,38 +46,42 @@ func AuthTokenMiddleware(next http.Handler) http.Handler {
 
 		ctx := r.Context()
 
-		user, err := getUser(ctx, userID)
+		user, err := s.getUser(ctx, userID)
 		if err != nil {
 			common.UnauthorizedMiddlewareError(w, r, err)
 			return
 		}
 		// Add the user to the context
-		ctx = context.WithValue(ctx, users.UserCtx, user)
+		ctx = context.WithValue(ctx, userCtx, user)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
 
-func getUser(ctx context.Context, userID int64) (*repository.User, error) {
+func (s *MiddlewareService) getUser(ctx context.Context, userID int64) (*repository.User, error) {
 	// if redis is not enabled, retrieve from database
-	if !config.Configs.RedisCfg.Enabled {
-		return repository.Store.Users.GetByID(ctx, userID)
+	if !s.cfg.RedisCfg.Enabled {
+		return s.PgStore.Users.GetByID(ctx, userID)
 	}
 
-	user, err := cache.CacheStorage.Users.Get(ctx, userID)
+	user, err := s.cacheStorage.Users.Get(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
 	// if no records is found, retrieve from database, then set to redis
+	var userDB *repository.User
 	if user == nil {
-		user, err := repository.Store.Users.GetByID(ctx, userID)
-		if err != nil {
-			return nil, err
-		}
-		if err := cache.CacheStorage.Users.Set(ctx, user); err != nil {
-			return nil, err
-		}
-	}
 
+		userDB, err = s.PgStore.Users.GetByID(ctx, userID)
+		if err != nil {
+			fmt.Println("???????????????????")
+			return nil, err
+		}
+		if err := s.cacheStorage.Users.Set(ctx, userDB); err != nil {
+			fmt.Println("???niama??")
+		}
+		return userDB, err
+
+	}
 	return user, nil
 }

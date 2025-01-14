@@ -8,21 +8,29 @@ import (
 	"github.com/juxue97/auth/internal/repository"
 )
 
-type Storage struct {
+type RedisCacheStorage struct {
 	Users interface {
 		Get(context.Context, int64) (*repository.User, error)
 		Set(context.Context, *repository.User) error
 		Delete(context.Context, int64) error
 	}
+}
+
+func NewRedisStorage(rdb *redis.Client, ttl time.Duration) *RedisCacheStorage {
+	return &RedisCacheStorage{
+		Users: &UserStore{rdb: rdb, ttl: ttl},
+	}
+}
+
+type RedisRateLimitStorage struct {
 	RateLimiter interface {
 		Count(context.Context, string, int, time.Duration) (bool, error)
 		GetRemainTime(context.Context, string) (time.Duration, error)
 	}
 }
 
-func NewRedisStorage(rdb *redis.Client) Storage {
-	return Storage{
-		Users:       &UserStore{rdb: rdb},
+func NewRedisRateLimiterStorage(rdb *redis.Client) *RedisRateLimitStorage {
+	return &RedisRateLimitStorage{
 		RateLimiter: &RateLimitStore{rdb: rdb},
 	}
 }

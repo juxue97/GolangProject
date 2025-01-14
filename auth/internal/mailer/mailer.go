@@ -6,9 +6,6 @@ import (
 	"fmt"
 	"text/template"
 	"time"
-
-	"github.com/juxue97/auth/internal/config"
-	"github.com/juxue97/common"
 )
 
 const (
@@ -29,15 +26,6 @@ var (
 	MailTrapMailer MailTrapClient
 	err            error
 )
-
-func init() {
-	// SendGridMailer,err = NewSendGrid(config.Configs.Mail.SendGrid.ApiKey, config.Configs.Mail.FromEmail)
-	MailTrapMailer, err = NewMailTrap(config.Configs.Mail.MailTrap.ApiKey, config.Configs.Mail.FromEmail)
-	if err != nil {
-		common.Logger.Fatal(err)
-	}
-	common.Logger.Info("Mailer Service initialized")
-}
 
 func templateParsingAndBuilding(templateFile string, data any) (*bytes.Buffer, *bytes.Buffer, error) {
 	// template parsing and building

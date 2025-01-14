@@ -5,25 +5,13 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/juxue97/auth/internal/config"
-	"github.com/juxue97/common"
 	_ "github.com/lib/pq"
 )
 
 var (
-	PgDB *sql.DB
+	pgDB *sql.DB
 	err  error
 )
-
-func init() {
-	PgDB, err = NewPgClient(config.Configs.DB.Addr, config.Configs.DB.MaxOpenConns, config.Configs.DB.MaxIdleConns, config.Configs.DB.MaxIdleTime)
-	if err != nil {
-		common.Logger.Fatal(err)
-	}
-
-	// defer PgDB.Close()
-	common.Logger.Info("Pg database connection established")
-}
 
 func NewPgClient(addr string, maxOpenConns int, maxIdleConns int, maxIdleTime string) (*sql.DB, error) {
 	db, err := sql.Open("postgres", addr)
