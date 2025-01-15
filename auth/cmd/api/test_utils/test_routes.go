@@ -74,6 +74,8 @@ func (app *Application) Mount() http.Handler {
 
 		// Private apis:
 		// Get activate user, all users, Get user, Update user, Delete user
+		// Modify here for mock, remove middleware
+
 		user.RegisterUserRoutes(r)
 	})
 	// chi.Walk(r, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {

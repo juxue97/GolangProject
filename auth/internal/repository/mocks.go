@@ -65,7 +65,11 @@ func (ms *mockUserStore) CreateAndInvite(ctx context.Context, user *User, token 
 	return nil
 }
 
-func (ms *mockUserStore) ActivateUser(context.Context, string) error {
+func (ms *mockUserStore) ActivateUser(ctx context.Context, token string) error {
+	if token != "valid-token" {
+		return common.ErrNotFound
+	}
+
 	return nil
 }
 
