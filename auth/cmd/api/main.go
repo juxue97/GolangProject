@@ -29,7 +29,7 @@ import (
 func main() {
 	// Consume .env here
 
-	cfg := config.GetConfig()
+	cfg := config.GetConfig(".env")
 
 	// logger
 	logger := common.NewLogger(cfg.Env)

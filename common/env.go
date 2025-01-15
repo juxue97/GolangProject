@@ -9,15 +9,6 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// func init() {
-// 	fmt.Println("IM HERE>??????")
-// 	err := godotenv.Load("../../.env")
-// 	if err != nil {
-// 		log.Fatal("Fatal: .env file not found")
-// 	}
-// 	log.Printf("Environment variables loaded")
-// }
-
 func EnvInit(path string) error {
 	err := godotenv.Load(path)
 	if err != nil {

@@ -29,8 +29,8 @@ type application struct {
 	store         *repository.Repository
 	cacheStorage  *cache.RedisCacheStorage
 	logger        *zap.SugaredLogger
-	mailer        mailer.MailTrapClient
-	authenticator *authenticator.JwtAuth
+	mailer        *mailer.Client
+	authenticator *authenticator.Authenticator
 	rateLimiter   *cache.RedisRateLimitStorage
 }
 
@@ -82,10 +82,10 @@ func (app *application) mount() http.Handler {
 		// Get activate user, all users, Get user, Update user, Delete user
 		user.RegisterUserRoutes(r)
 	})
-	chi.Walk(r, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
-		fmt.Printf("Registered route: %s %s\n", method, route)
-		return nil
-	})
+	// chi.Walk(r, func(method string, route string, handler http.Handler, middlewares ...func(http.Handler) http.Handler) error {
+	// 	fmt.Printf("Registered route: %s %s\n", method, route)
+	// 	return nil
+	// })
 	return r
 }
 

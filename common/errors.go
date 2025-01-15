@@ -33,6 +33,14 @@ func InternalServerError(w http.ResponseWriter, r *http.Request, err error) {
 	WriteError(w, http.StatusInternalServerError, "the server encountered a problem")
 }
 
+func DuplicateErrorResponse(w http.ResponseWriter, r *http.Request, err error) {
+	var logger *zap.SugaredLogger = NewLogger(os.Getenv("ENV"))
+
+	logger.Warnf("Duplicate error", "method", r.Method, "path", r.URL.Path, "error", err.Error())
+
+	WriteError(w, http.StatusConflict, err.Error())
+}
+
 func NotFoundError(w http.ResponseWriter, r *http.Request, err error) {
 	var logger *zap.SugaredLogger = NewLogger(os.Getenv("ENV"))
 

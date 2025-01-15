@@ -6,23 +6,25 @@ import (
 	gomail "gopkg.in/mail.v2"
 )
 
-type MailTrapClient struct {
+type MailTrapService struct {
 	fromEmail string
 	apiKey    string
 }
 
-func NewMailTrapClient(apiKey, fromEmail string) (MailTrapClient, error) {
+func NewMailTrapClient(apiKey, fromEmail string) (*Client, error) {
 	if apiKey == "" {
-		return MailTrapClient{}, errors.New("api key is required")
+		return &Client{}, errors.New("api key is required")
 	}
 
-	return MailTrapClient{
-		fromEmail: fromEmail,
-		apiKey:    apiKey,
+	return &Client{
+		MailTrapService: MailTrapService{
+			fromEmail: fromEmail,
+			apiKey:    apiKey,
+		},
 	}, nil
 }
 
-func (mtc MailTrapClient) Send(templateFile, username, email string, data any, isSandBox bool) (int, error) {
+func (mtc MailTrapService) Send(templateFile, username, email string, data any, isSandBox bool) (int, error) {
 	// Template parsing and building
 	subject, body, err := templateParsingAndBuilding(templateFile, data)
 	if err != nil {

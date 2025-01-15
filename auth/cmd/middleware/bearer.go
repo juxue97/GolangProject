@@ -30,7 +30,7 @@ func (s *MiddlewareService) AuthTokenMiddleware(next http.Handler) http.Handler 
 
 		// Get the token
 		token := parts[1]
-		jwtToken, err := s.authenticator.ValidateToken(token)
+		jwtToken, err := s.authenticator.Jwt.ValidateToken(token)
 		if err != nil {
 			common.UnauthorizedMiddlewareError(w, r, err)
 			return
@@ -74,11 +74,9 @@ func (s *MiddlewareService) getUser(ctx context.Context, userID int64) (*reposit
 
 		userDB, err = s.PgStore.Users.GetByID(ctx, userID)
 		if err != nil {
-			fmt.Println("???????????????????")
 			return nil, err
 		}
 		if err := s.cacheStorage.Users.Set(ctx, userDB); err != nil {
-			fmt.Println("???niama??")
 		}
 		return userDB, err
 

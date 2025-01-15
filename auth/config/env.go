@@ -30,8 +30,8 @@ type pgDBConfig struct {
 
 const version = "0.0.1" // set into .env
 
-func GetConfig() *Config {
-	err := common.EnvInit("./.env")
+func GetConfig(path string) *Config {
+	err := common.EnvInit(path)
 	if err != nil {
 		log.Fatal(err)
 	}

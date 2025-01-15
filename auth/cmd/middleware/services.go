@@ -10,12 +10,12 @@ import (
 type MiddlewareService struct {
 	cfg           *config.Config
 	PgStore       *repository.Repository
-	authenticator *authenticator.JwtAuth
+	authenticator *authenticator.Authenticator
 	cacheStorage  *cache.RedisCacheStorage
 	rateLimiter   *cache.RedisRateLimitStorage
 }
 
-func NewMiddlewareService(cfg *config.Config, pgStore *repository.Repository, authenticator *authenticator.JwtAuth, cacheStorage *cache.RedisCacheStorage, rateLimiter *cache.RedisRateLimitStorage) *MiddlewareService {
+func NewMiddlewareService(cfg *config.Config, pgStore *repository.Repository, authenticator *authenticator.Authenticator, cacheStorage *cache.RedisCacheStorage, rateLimiter *cache.RedisRateLimitStorage) *MiddlewareService {
 	return &MiddlewareService{
 		cfg:           cfg,
 		PgStore:       pgStore,

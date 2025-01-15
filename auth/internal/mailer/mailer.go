@@ -17,15 +17,11 @@ const (
 //go:embed "templates"
 var fs embed.FS
 
-type Client interface {
-	Send(templateFile, username, email string, data any, isSandBox bool) (int, error)
+type Client struct {
+	MailTrapService interface {
+		Send(templateFile, username, email string, data any, isSandBox bool) (int, error)
+	}
 }
-
-// var SendGridMailer *SendGridMailer
-var (
-	MailTrapMailer MailTrapClient
-	err            error
-)
 
 func templateParsingAndBuilding(templateFile string, data any) (*bytes.Buffer, *bytes.Buffer, error) {
 	// template parsing and building

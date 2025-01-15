@@ -44,7 +44,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.loginUserPayload"
+                            "$ref": "#/definitions/auth.LoginUserPayload"
                         }
                     }
                 ],
@@ -90,7 +90,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.registerUserPayload"
+                            "$ref": "#/definitions/auth.RegisterUserPayload"
                         }
                     }
                 ],
@@ -344,7 +344,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "auth.loginUserPayload": {
+        "auth.LoginUserPayload": {
             "type": "object",
             "required": [
                 "email",
@@ -362,7 +362,7 @@ const docTemplate = `{
                 }
             }
         },
-        "auth.registerUserPayload": {
+        "auth.RegisterUserPayload": {
             "type": "object",
             "required": [
                 "email",

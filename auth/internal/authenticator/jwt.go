@@ -14,16 +14,16 @@ type JwtAuth struct {
 	iss    string
 }
 
-func NewJwtAuth(exp time.Duration, secret string, aud string, iss string) *JwtAuth {
-	return &JwtAuth{
-		exp:    exp,
-		secret: secret,
-		iss:    iss,
-		aud:    aud,
+func NewJwtAuth(exp time.Duration, secret string, aud string, iss string) *Authenticator {
+	return &Authenticator{
+		Jwt: &JwtAuth{
+			exp:    exp,
+			secret: secret,
+			iss:    iss,
+			aud:    aud,
+		},
 	}
 }
-
-var JwtAuthenticator *JwtAuth
 
 func (j *JwtAuth) GenerateToken(claims jwt.Claims) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)

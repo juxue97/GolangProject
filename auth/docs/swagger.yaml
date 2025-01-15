@@ -1,5 +1,5 @@
 definitions:
-  auth.loginUserPayload:
+  auth.LoginUserPayload:
     properties:
       email:
         maxLength: 255
@@ -12,7 +12,7 @@ definitions:
     - email
     - password
     type: object
-  auth.registerUserPayload:
+  auth.RegisterUserPayload:
     properties:
       email:
         maxLength: 255
@@ -90,7 +90,7 @@ paths:
         name: payload
         required: true
         schema:
-          $ref: '#/definitions/auth.loginUserPayload'
+          $ref: '#/definitions/auth.LoginUserPayload'
       produces:
       - application/json
       responses:
@@ -121,7 +121,7 @@ paths:
         name: payload
         required: true
         schema:
-          $ref: '#/definitions/auth.registerUserPayload'
+          $ref: '#/definitions/auth.RegisterUserPayload'
       produces:
       - application/json
       responses:

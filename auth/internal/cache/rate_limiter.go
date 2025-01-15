@@ -15,7 +15,6 @@ type RateLimitStore struct {
 func (rls *RateLimitStore) Count(ctx context.Context, ip string, limit int, window time.Duration) (bool, error) {
 	// Define the Redis key for the IP
 	key := fmt.Sprintf("ratelimit:%s", ip)
-
 	// Start a Redis transaction
 	pipe := rls.rdb.TxPipeline()
 

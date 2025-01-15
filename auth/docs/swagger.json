@@ -35,7 +35,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.loginUserPayload"
+                            "$ref": "#/definitions/auth.LoginUserPayload"
                         }
                     }
                 ],
@@ -81,7 +81,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.registerUserPayload"
+                            "$ref": "#/definitions/auth.RegisterUserPayload"
                         }
                     }
                 ],
@@ -335,7 +335,7 @@
         }
     },
     "definitions": {
-        "auth.loginUserPayload": {
+        "auth.LoginUserPayload": {
             "type": "object",
             "required": [
                 "email",
@@ -353,7 +353,7 @@
                 }
             }
         },
-        "auth.registerUserPayload": {
+        "auth.RegisterUserPayload": {
             "type": "object",
             "required": [
                 "email",

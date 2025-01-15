@@ -22,11 +22,17 @@ type authHandler struct {
 	cfg           *config.Config
 	logger        *zap.SugaredLogger
 	store         *repository.Repository
-	authenticator *authenticator.JwtAuth
-	mailer        mailer.Client
+	authenticator *authenticator.Authenticator
+	mailer        *mailer.Client
 }
 
-func NewAuthHandler(cfg *config.Config, logger *zap.SugaredLogger, store *repository.Repository, authenticator *authenticator.JwtAuth, mailer mailer.MailTrapClient) *authHandler {
+func NewAuthHandler(
+	cfg *config.Config,
+	logger *zap.SugaredLogger,
+	store *repository.Repository,
+	authenticator *authenticator.Authenticator,
+	mailer *mailer.Client,
+) *authHandler {
 	return &authHandler{
 		cfg:           cfg,
 		logger:        logger,
@@ -48,13 +54,14 @@ type userWithToken struct {
 // @Tags			authentication
 // @Accept			json
 // @Produce		json
-// @Param			payload	body		registerUserPayload	true	"User credentials"
+// @Param			payload	body		RegisterUserPayload	true	"User credentials"
 // @Success		201		{object}	userWithToken		"User registered"
 // @Failure		400		{object}	error
 // @Failure		500		{object}	error
 // @Router			/auth/user [post]
 func (a *authHandler) registerUserHandler(w http.ResponseWriter, r *http.Request) {
-	var payload registerUserPayload
+	var payload RegisterUserPayload
+
 	if err := common.ReadJSON(w, r, &payload); err != nil {
 		common.BadRequestResponse(w, r, err)
 		return
@@ -76,7 +83,6 @@ func (a *authHandler) registerUserHandler(w http.ResponseWriter, r *http.Request
 		common.InternalServerError(w, r, err)
 		return
 	}
-
 	// send activation email
 	ctx := r.Context()
 	plainToken := uuid.New().String()
@@ -89,15 +95,14 @@ func (a *authHandler) registerUserHandler(w http.ResponseWriter, r *http.Request
 	if err != nil {
 		switch err {
 		case common.ErrUserAlreadyExists:
-			common.BadRequestResponse(w, r, err)
+			common.DuplicateErrorResponse(w, r, err)
 		case common.ErrEmailAlreadyExists:
-			common.BadRequestResponse(w, r, err)
+			common.DuplicateErrorResponse(w, r, err)
 		default:
 			common.InternalServerError(w, r, err)
 		}
 		return
 	}
-
 	userWithToken := userWithToken{
 		User:  user,
 		Token: plainToken,
@@ -114,8 +119,7 @@ func (a *authHandler) registerUserHandler(w http.ResponseWriter, r *http.Request
 		Username:      user.Username,
 		ActivationURL: activationURL,
 	}
-
-	status, err := a.mailer.Send(mailer.UserWelcomeInvitationTemplate, user.Username, user.Email, vars, !isProdEnv)
+	status, err := a.mailer.MailTrapService.Send(mailer.UserWelcomeInvitationTemplate, user.Username, user.Email, vars, !isProdEnv)
 	if err != nil {
 		a.logger.Errorw("failed to send welcoming email", "error", err)
 
@@ -126,7 +130,6 @@ func (a *authHandler) registerUserHandler(w http.ResponseWriter, r *http.Request
 		common.InternalServerError(w, r, err)
 		return
 	}
-
 	a.logger.Infow("comfirmation email sent", "status code", status)
 
 	if err := common.WriteJSON(w, http.StatusCreated, userWithToken); err != nil {
@@ -142,22 +145,25 @@ func (a *authHandler) registerUserHandler(w http.ResponseWriter, r *http.Request
 //	@Tags			authentication
 //	@Accept			json
 //	@Produce		json
-//	@Param			payload	body		loginUserPayload	true	"User credentials"
+//	@Param			payload	body		LoginUserPayload	true	"User credentials"
 //	@Success		200		{string}	string					"Token"
 //	@Failure		400		{object}	error
 //	@Failure		401		{object}	error
 //	@Failure		500		{object}	error
 //	@Router			/auth/login [post]
 func (a *authHandler) loginUserHandler(w http.ResponseWriter, r *http.Request) {
-	var payload loginUserPayload
+	var payload LoginUserPayload
+
 	if err := common.ReadJSON(w, r, &payload); err != nil {
 		common.BadRequestResponse(w, r, err)
 		return
 	}
+
 	if err := internal.Validate.Struct(payload); err != nil {
 		common.BadRequestResponse(w, r, err)
 		return
 	}
+
 	user, err := a.store.Users.GetByEmail(r.Context(), payload.Email)
 	if err != nil {
 		switch err {
@@ -171,7 +177,7 @@ func (a *authHandler) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 	match := user.Password.ComparePassword(payload.Password)
 	if !match {
 		a.logger.Errorw("failed to compare password")
-		common.UnauthorizedError(w, r, fmt.Errorf("failed to compare password"))
+		common.UnauthorizedError(w, r, fmt.Errorf("invalid credentials"))
 		return
 	}
 
@@ -185,13 +191,13 @@ func (a *authHandler) loginUserHandler(w http.ResponseWriter, r *http.Request) {
 		"aud": a.cfg.Auth.Token.Aud,
 	}
 
-	token, err := a.authenticator.GenerateToken(claims)
+	token, err := a.authenticator.Jwt.GenerateToken(claims)
 	if err != nil {
 		a.logger.Errorw("failed to generate token", "error", err)
 		common.InternalServerError(w, r, err)
 		return
 	}
-	if err := common.WriteJSON(w, http.StatusCreated, token); err != nil {
+	if err := common.WriteJSON(w, http.StatusOK, token); err != nil {
 		common.InternalServerError(w, r, err)
 	}
 }
