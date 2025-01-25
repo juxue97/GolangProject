@@ -6,17 +6,18 @@ import (
 
 	"github.com/juxue97/common"
 	pb "github.com/juxue97/common/api"
+	"github.com/juxue97/gateway/gateway"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type handler struct {
 	// gateway - service discovery
-	client pb.OrderServiceClient
+	gateway gateway.OrdersGateway
 }
 
-func NewHandler(client pb.OrderServiceClient) *handler {
-	return &handler{client: client}
+func NewHandler(gateway gateway.OrdersGateway) *handler {
+	return &handler{gateway: gateway}
 }
 
 func (h *handler) registerRoutes(mux *http.ServeMux) {
@@ -53,7 +54,7 @@ func (h *handler) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	o, err := h.client.CreateOrder(r.Context(), &pb.CreateOrderRequest{
+	o, err := h.gateway.CreateOrder(r.Context(), &pb.CreateOrderRequest{
 		CustomerID: customerID,
 		Items:      items,
 	})

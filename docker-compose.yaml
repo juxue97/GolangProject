@@ -32,7 +32,7 @@ services:
     hostname: redis-commander
     restart: unless-stopped
     ports:
-      - "127.0.0.1:8081:8081"
+      - "8081:8081"
     environment:
       - REDIS_HOSTS=redis:6379
     depends_on:
@@ -40,8 +40,20 @@ services:
     networks:
       - backend
 
+  consul:
+    image: hashicorp/consul
+    container_name: consul
+    command: agent -server -ui -node=server-1 -bootstrap-expect=1 -client=0.0.0.0
+    restart: unless-stopped
+    ports:
+      - 8500:8500
+      - 8600:8600/udp
+    volumes:
+      - D:/database/consul:/consul/data
+
 volumes:
   golangPgData:
+  consul:
 
 networks:
   backend:
