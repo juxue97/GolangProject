@@ -8,16 +8,6 @@ import (
 	"testing"
 )
 
-type (
-	userKey       string
-	targetUserKey string
-)
-
-const (
-	userCtx       userKey       = "user"
-	targetUserCtx targetUserKey = "targetUser"
-)
-
 func ExecuteRequest(req *http.Request, mux http.Handler) *httptest.ResponseRecorder {
 	rr := httptest.NewRecorder()
 	mux.ServeHTTP(rr, req)
