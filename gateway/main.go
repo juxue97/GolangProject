@@ -14,11 +14,18 @@ import (
 
 var (
 	serviceName = "gateway"
-	httpAddr    = common.GetString("HTTP_ADDR", ":8080")
-	consulAddr  = common.GetString("CONSUL_ADDR", "localhost:8500")
+
+	jaegerAddr = common.GetString("JAEGER_ADDR", "localhost:4318")
+	httpAddr   = common.GetString("HTTP_ADDR", ":8080")
+	consulAddr = common.GetString("CONSUL_ADDR", "localhost:8500")
 )
 
 func main() {
+	err := common.SetGlobalTracer(context.TODO(), serviceName, jaegerAddr)
+	if err != nil {
+		log.Fatal("failed to set global tracer")
+	}
+
 	// register service on consul
 	registry, err := consul.NewRegistry(consulAddr, serviceName)
 	if err != nil {
