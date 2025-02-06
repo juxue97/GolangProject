@@ -15,6 +15,8 @@ var (
 	ErrNotFound           = errors.New("user not found")
 	ErrExceededLimit      = errors.New("rate limit exceeded")
 	ErrContextNotFound    = errors.New("target user not found in context")
+	ErrNoQuantity         = errors.New("quantity cannot less than 1")
+	ErrConvertID          = errors.New("failed to convert inserted ID to primitive.ObjectID")
 )
 
 func BadRequestResponse(w http.ResponseWriter, r *http.Request, err error) {
@@ -80,4 +82,12 @@ func TooManyRequestsError(w http.ResponseWriter, r *http.Request, retryAfter str
 	w.Header().Set("Retry-After", retryAfter)
 
 	WriteError(w, http.StatusTooManyRequests, "rate limit exceeded, retry after: "+retryAfter+"s")
+}
+
+func UnprocessableEntityResponse(w http.ResponseWriter, r *http.Request, err error) {
+	var logger *zap.SugaredLogger = NewLogger(os.Getenv("ENV"))
+
+	logger.Warnf("Unprocessable Entity", "method", r.Method, "path", r.URL.Path, "error", err.Error())
+
+	WriteError(w, http.StatusUnprocessableEntity, err.Error())
 }

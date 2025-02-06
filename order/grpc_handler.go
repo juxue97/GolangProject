@@ -51,6 +51,8 @@ func (h *gRPCHandler) CreateOrder(ctx context.Context, payload *pb.CreateOrderRe
 		return nil, err
 	}
 
+	fmt.Println("wtf", o.Items)
+
 	marshalledOrder, err := json.Marshal(o)
 	if err != nil {
 		log.Fatal(err)

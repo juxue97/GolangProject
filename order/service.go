@@ -2,54 +2,62 @@ package main
 
 import (
 	"context"
-	"log"
+	"fmt"
 
 	pb "github.com/juxue97/common/api"
+	"github.com/juxue97/order/gateway"
 )
 
 type service struct {
-	store OrderStore
+	store   OrderStore
+	gateway gateway.StocksGateway
 }
 
-func NewService(store OrderStore) *service {
-	return &service{store: store}
+func NewService(store OrderStore, gateway gateway.StocksGateway) *service {
+	return &service{
+		store:   store,
+		gateway: gateway,
+	}
 }
 
 func (s *service) createOrder(ctx context.Context, payload *pb.CreateOrderRequest, items []*pb.Item) (*pb.Order, error) {
-	id, err := s.store.Create(ctx, payload, items)
-	if err != nil {
-		return nil, err
-	}
+	id, err := s.store.Create(ctx, Order{
+		CustomerID:  payload.CustomerID,
+		Status:      "pending",
+		Items:       items,
+		PaymentLink: "",
+	})
 
 	o := &pb.Order{
-		ID:          id,
+		ID:          id.Hex(),
 		CustomerID:  payload.CustomerID,
 		Status:      "pending",
 		Items:       items,
 		PaymentLink: "",
 	}
 
-	return o, nil
+	return o, err
 }
 
 func (s *service) getOrder(ctx context.Context, payload *pb.GetOrderRequest) (*pb.Order, error) {
-	return s.store.Get(ctx, payload.OrderID, payload.CustomerID)
+	o, err := s.store.Get(ctx, payload.OrderID, payload.CustomerID)
+	if err != nil {
+		return nil, err
+	}
+	return o.ToProto(), nil
 }
 
 func (s *service) validateOrder(ctx context.Context, payload *pb.CreateOrderRequest) ([]*pb.Item, error) {
 	mergedItems := mergeItemsQuantities(payload.Items)
 
 	// validate with stock service
-	log.Println(mergedItems)
+	inStock, itemsWithPrice, err := s.gateway.CheckIfItemsInStock(ctx, payload.CustomerID, mergedItems)
+	if err != nil {
+		return nil, err
+	}
 
-	// temporary
-	var itemsWithPrice []*pb.Item
-	for _, item := range mergedItems {
-		itemsWithPrice = append(itemsWithPrice, &pb.Item{
-			PriceID:  "price_1QmgLeQoT0OvyN0AztngBGhM",
-			Quantity: item.Quantity,
-			ID:       item.ID,
-		})
+	if !inStock {
+		return nil, fmt.Errorf("insufficient stock amount")
 	}
 
 	return itemsWithPrice, nil

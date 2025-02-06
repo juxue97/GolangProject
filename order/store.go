@@ -2,52 +2,79 @@ package main
 
 import (
 	"context"
-	"errors"
+	"fmt"
 
 	pb "github.com/juxue97/common/api"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var orders = make([]*pb.Order, 0)
+const (
+	DbName         = "orders"
+	CollectionName = "orders"
+)
 
 type store struct {
-	// MongoDB
+	mongoDB *mongo.Client
 }
 
-func NewStore() *store {
-	return &store{}
+func NewStore(mongoDB *mongo.Client) *store {
+	return &store{mongoDB: mongoDB}
 }
 
-func (s *store) Create(ctx context.Context, payload *pb.CreateOrderRequest, items []*pb.Item) (string, error) {
-	id := "42"
+func (s *store) Create(ctx context.Context, o Order) (primitive.ObjectID, error) {
+	col := s.mongoDB.Database(DbName).Collection(CollectionName)
 
-	orders = append(orders, &pb.Order{
-		ID:         id,
-		CustomerID: payload.CustomerID,
-		Status:     "pending",
-		Items:      items,
-	})
-
-	return id, nil
-}
-
-func (s *store) Get(ctx context.Context, orderID string, customerID string) (*pb.Order, error) {
-	for _, o := range orders {
-		if o.ID == orderID && o.CustomerID == customerID {
-			return o, nil
-		}
+	newOrder, err := col.InsertOne(ctx, o)
+	id, ok := newOrder.InsertedID.(primitive.ObjectID)
+	if !ok {
+		return primitive.NilObjectID, fmt.Errorf("failed to convert inserted ID to primitive.ObjectID")
 	}
 
-	return nil, errors.New("order not found")
+	return id, err
+}
+
+func (s *store) Get(ctx context.Context, orderID string, customerID string) (*Order, error) {
+	col := s.mongoDB.Database(DbName).Collection(CollectionName)
+
+	oID, err := primitive.ObjectIDFromHex(orderID)
+	if err != nil {
+		return nil, err
+	}
+
+	var o Order
+	filter := bson.M{
+		"_id":        oID,
+		"customerID": customerID,
+	}
+
+	err = col.FindOne(ctx, filter).Decode(&o)
+
+	return &o, err
 }
 
 func (s *store) Update(ctx context.Context, id string, o *pb.Order) error {
-	for i, order := range orders {
-		if order.ID == id {
-			orders[i].Status = o.Status
-			orders[i].PaymentLink = o.PaymentLink
-			return nil
-		}
+	col := s.mongoDB.Database(DbName).Collection(CollectionName)
+
+	oID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+	filter := bson.M{
+		"_id": oID,
 	}
 
-	return nil
+	update := bson.M{
+		"$set": bson.M{
+			"paymentLink": o.PaymentLink,
+			"status":      o.Status,
+		},
+	}
+
+	result, err := col.UpdateOne(ctx, filter, update)
+	if result.MatchedCount == 0 {
+		return fmt.Errorf("no document found with id %s", id)
+	}
+	return err
 }

@@ -12,10 +12,43 @@ message Order {
     string PaymentLink =5;
 }
 
+message Product{
+    string ID =1;
+    string Name =2;
+    string TaxCode =3;
+    string Description=4;
+    bool Active=5;
+    float Price =6;
+    int64 Quantity=7;
+    string Currency=8;
+}
+
 service OrderService{
     rpc CreateOrder(CreateOrderRequest) returns (Order);
     rpc GetOrder(GetOrderRequest) returns (Order);
     rpc UpdateOrder(Order) returns (Order);
+}
+
+service StockService{
+    rpc CheckIfItemsInStock(CheckIfItemsInStockRequest) returns (CheckIfItemsInStockResponse);
+    rpc GetItems(GetItemsRequest) returns (GetItemsResponse);
+}
+
+message CheckIfItemsInStockRequest{
+    repeated ItemsWithQuantity Items =1;
+}
+
+message CheckIfItemsInStockResponse{
+    bool InStock =1;
+    repeated Item Items =2;
+}
+
+message GetItemsRequest{
+    repeated string ItemIDs=1;
+}
+
+message GetItemsResponse{
+    repeated Item Items=1;
 }
 
 message GetOrderRequest{

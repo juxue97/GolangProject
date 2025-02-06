@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"log"
 	"net"
 	"net/http"
 	"time"
@@ -85,7 +84,7 @@ func main() {
 	httpServer.registerRouters(mux)
 
 	go func() {
-		log.Printf("starting http server at %s", httpAddr)
+		logger.Info("starting http server", zap.String("port", httpAddr))
 		if err := http.ListenAndServe(httpAddr, mux); err != nil {
 			logger.Fatal("failed to start http server", zap.Error(err))
 		}
@@ -117,7 +116,7 @@ func main() {
 
 	// service.createOrder(context.Background())
 
-	logger.Info("gRPC server has been started at %s", zap.String("port", gRPCAddr))
+	logger.Info("gRPC server has been started", zap.String("port", gRPCAddr))
 
 	if err := gRPCServer.Serve(l); err != nil {
 		logger.Fatal("failed to serve gRPC server", zap.Error(err))

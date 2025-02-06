@@ -4,7 +4,6 @@ import (
 	pb "github.com/juxue97/common/api"
 )
 
-type PaymentProcessor interface {
-	CreatePaymentLink(*pb.Order) (string, error)
+type StockProcessor interface {
 	CreateProduct(*pb.Product) (string, string, error)
 }

@@ -4,32 +4,42 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/http"
 	"time"
 
+	_ "github.com/joho/godotenv/autoload" // put this line for all modules
 	"github.com/juxue97/common"
 	"github.com/juxue97/common/broker"
 	mongoConn "github.com/juxue97/common/db"
 	"github.com/juxue97/common/discovery"
 	"github.com/juxue97/common/discovery/consul"
-	"github.com/juxue97/order/gateway"
+	stripeProcessor "github.com/juxue97/stock/processor/stripe"
+	"github.com/stripe/stripe-go/v81"
+
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
 var (
-	serviceName = "orders"
+	serviceName = "stocks"
+
+	gRPCAddr = common.GetString("GRPC_ADDR", "localhost:8003")
+	httpAddr = common.GetString("HTTP_ADDR", ":8083")
 
 	jaegerAddr = common.GetString("JAEGER_ADDR", "localhost:4318")
-	gRPCAddr   = common.GetString("GRPC_ADDR", "localhost:8001")
 	consulAddr = common.GetString("CONSUL_ADDR", "localhost:8500")
-	amqpUser   = common.GetString("RABBITMQ_USER", "juxue")
-	amqpPass   = common.GetString("RABBITMQ_PASS", "veryStrongPassword")
-	amqpHost   = common.GetString("RABBITMQ_HOST", "localhost")
-	amqpPort   = common.GetString("RABBITMQ_PORT", "5672")
+
+	amqpUser = common.GetString("RABBITMQ_USER", "juxue")
+	amqpPass = common.GetString("RABBITMQ_PASS", "veryStrongPassword")
+	amqpHost = common.GetString("RABBITMQ_HOST", "localhost")
+	amqpPort = common.GetString("RABBITMQ_PORT", "5672")
 
 	mongoUser = common.GetString("MONGO_DB_USER", "juxue")
 	mongoPass = common.GetString("MONGO_DB_PASS", "veryStrongPassword")
 	mongoHost = common.GetString("MONGO_DB_HOST", "localhost:27017")
+
+	stripeKey = common.GetString("STRIPE_KEY", "")
+	// endpointStripeSecret = common.GetString("ENDPOINT_STRIPE_SECRET", "whsec_...")
 )
 
 func main() {
@@ -73,7 +83,8 @@ func main() {
 		ch.Close()
 	}()
 
-	// MongoDB Conn
+	stripe.Key = stripeKey
+
 	mongoURI := fmt.Sprintf("mongodb://%s:%s@%s", mongoUser, mongoPass, mongoHost)
 	mongoClient, err := mongoConn.ConnectToMongoDB(mongoURI)
 	if err != nil {
@@ -93,12 +104,28 @@ func main() {
 	}
 	defer l.Close()
 
-	gateway := gateway.NewGateway(registry)
+	stripeProcessor := stripeProcessor.NewProcessor()
 
 	store := NewStore(mongoClient)
-	service := NewService(store, gateway)
-	serviceWithTelemetry := NewtelemetryMiddleware(service)
-	serviceWithLogging := NewloggingMiddleware(serviceWithTelemetry)
+	service := NewStockService(store, stripeProcessor)
+
+	mux := http.NewServeMux()
+	httpServer := NewStockHandler(service)
+	httpServer.registerRouters(mux)
+
+	// adding prefix
+	v1 := http.NewServeMux()
+	v1.Handle("/api/", http.StripPrefix("/api", mux))
+
+	go func() {
+		logger.Info("starting http server", zap.String("port", httpAddr))
+		if err := http.ListenAndServe(httpAddr, v1); err != nil {
+			logger.Fatal("failed to start http server", zap.Error(err))
+		}
+	}()
+
+	serviceWithTelemetry := NewTelemetryMiddleware(service)
+	serviceWithLogging := NewLoggingMiddleware(serviceWithTelemetry)
 
 	NewGRPCHandler(gRPCServer, serviceWithLogging, ch)
 
