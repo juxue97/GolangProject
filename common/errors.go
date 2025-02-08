@@ -17,6 +17,7 @@ var (
 	ErrContextNotFound    = errors.New("target user not found in context")
 	ErrNoQuantity         = errors.New("quantity cannot less than 1")
 	ErrConvertID          = errors.New("failed to convert inserted ID to primitive.ObjectID")
+	ErrNoDoc              = errors.New("no document found")
 )
 
 func BadRequestResponse(w http.ResponseWriter, r *http.Request, err error) {

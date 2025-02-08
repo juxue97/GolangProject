@@ -34,13 +34,13 @@ func (g *gRPCHandler) CheckIfItemsInStock(ctx context.Context, payload *pb.Check
 	}, nil
 }
 
-func (g *gRPCHandler) GetItems(ctx context.Context, payload *pb.GetItemsRequest) (*pb.GetItemsResponse, error) {
-	items, err := g.service.GetItems(ctx, payload.ItemIDs)
-	if err != nil {
-		return nil, err
-	}
+// func (g *gRPCHandler) GetItems(ctx context.Context, payload *pb.GetItemsRequest) (*pb.GetItemsResponse, error) {
+// 	items, err := g.service.GetItems(ctx, payload.ItemIDs)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return &pb.GetItemsResponse{
-		Items: items,
-	}, nil
-}
+// 	return &pb.GetItemsResponse{
+// 		Items: items,
+// 	}, nil
+// }

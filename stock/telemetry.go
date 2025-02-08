@@ -23,9 +23,9 @@ func (s *telemetryMiddleware) CheckIfItemInStock(ctx context.Context, p []*pb.It
 	return s.next.CheckIfItemInStock(ctx, p)
 }
 
-func (s *telemetryMiddleware) GetItems(ctx context.Context, ids []string) ([]*pb.Item, error) {
-	span := trace.SpanFromContext(ctx)
-	span.AddEvent(fmt.Sprintf("GetItems: %v", ids))
+// func (s *telemetryMiddleware) GetItems(ctx context.Context, ids []string) ([]*pb.Item, error) {
+// 	span := trace.SpanFromContext(ctx)
+// 	span.AddEvent(fmt.Sprintf("GetItems: %v", ids))
 
-	return s.next.GetItems(ctx, ids)
-}
+// 	return s.next.GetItems(ctx, ids)
+// }

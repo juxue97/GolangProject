@@ -25,11 +25,11 @@ func (s *loggingMiddleware) CheckIfItemInStock(ctx context.Context, p []*pb.Item
 	return s.next.CheckIfItemInStock(ctx, p)
 }
 
-func (s *loggingMiddleware) GetItems(ctx context.Context, ids []string) ([]*pb.Item, error) {
-	start := time.Now()
-	defer func() {
-		zap.L().Info("GetItems", zap.Duration("took", time.Since(start)))
-	}()
+// func (s *loggingMiddleware) GetItems(ctx context.Context, ids []string) ([]*pb.Item, error) {
+// 	start := time.Now()
+// 	defer func() {
+// 		zap.L().Info("GetItems", zap.Duration("took", time.Since(start)))
+// 	}()
 
-	return s.next.GetItems(ctx, ids)
-}
+// 	return s.next.GetItems(ctx, ids)
+// }

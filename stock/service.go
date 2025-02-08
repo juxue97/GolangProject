@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 
 	"github.com/juxue97/common"
 	pb "github.com/juxue97/common/api"
@@ -28,7 +30,7 @@ func (s *stockService) CheckIfItemInStock(ctx context.Context, p []*pb.ItemsWith
 		itemIDs = append(itemIDs, item.ID)
 	}
 
-	itemsInStock, err := s.store.GetItems(ctx, itemIDs)
+	itemsInStock, err := s.store.GetItemsStock(ctx, itemIDs)
 	if err != nil {
 		return false, nil, err
 	}
@@ -62,8 +64,62 @@ func (s *stockService) CheckIfItemInStock(ctx context.Context, p []*pb.ItemsWith
 	return true, items, nil
 }
 
-func (s *stockService) GetItems(ctx context.Context, ids []string) ([]*pb.Item, error) {
-	return s.store.GetItems(ctx, ids)
+func (s *stockService) GetItems(ctx context.Context) ([]*Item, error) {
+	return s.store.GetItems(ctx)
+}
+
+func (s *stockService) GetItem(ctx context.Context, id string) (*Item, error) {
+	return s.store.GetItem(ctx, id)
+}
+
+func (s *stockService) UpdateItem(ctx context.Context, id string, p *UpdateItemRequest) (*Item, error) {
+	// Note: product id never change, but priceID will
+	// first of all, obtain the product ID from MongoDB first
+	oldItem, err := s.store.GetItem(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	jsonPayload, err := json.Marshal(p)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal payload to JSON:%v", err)
+	}
+
+	var updateMap processor.Item
+	if err := json.Unmarshal(jsonPayload, &updateMap); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal JSON payload: %w", err)
+	}
+
+	var newPriceID string
+	newPriceID, err = s.stripeProcessor.UpdateProduct(oldItem.ProductID, oldItem.PriceID, updateMap)
+	if err != nil {
+		return nil, err
+	}
+	if newPriceID != "" {
+		updateMap.PriceID = newPriceID
+	}
+
+	return s.store.UpdateItem(ctx, id, updateMap)
+}
+
+func (s *stockService) UpdateStock(ctx context.Context, id string, quantity int) (*Item, error) {
+	return s.store.UpdateStock(ctx, id, quantity)
+}
+
+func (s *stockService) DeleteItem(ctx context.Context, id string) error {
+	oldItem, err := s.store.GetItem(ctx, id)
+	if err != nil {
+		return err
+	}
+	oldItem.Active = false
+	param := &processor.Item{
+		Active: false,
+	}
+	_, err = s.stripeProcessor.UpdateProduct(oldItem.ProductID, oldItem.PriceID, *param)
+	if err != nil {
+		return err
+	}
+
+	return s.store.DeleteItem(ctx, id)
 }
 
 func (s *stockService) CreateItem(ctx context.Context, p *CreateItemRequest) (primitive.ObjectID, error) {

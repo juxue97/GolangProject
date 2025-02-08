@@ -18,9 +18,10 @@ message Product{
     string TaxCode =3;
     string Description=4;
     bool Active=5;
-    float Price =6;
+    double Price =6;
     int64 Quantity=7;
     string Currency=8;
+    map<string, string> Metadata =9;
 }
 
 service OrderService{

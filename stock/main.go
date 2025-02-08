@@ -108,6 +108,8 @@ func main() {
 
 	store := NewStore(mongoClient)
 	service := NewStockService(store, stripeProcessor)
+	serviceWithTelemetry := NewTelemetryMiddleware(service)
+	serviceWithLogging := NewLoggingMiddleware(serviceWithTelemetry)
 
 	mux := http.NewServeMux()
 	httpServer := NewStockHandler(service)
@@ -123,9 +125,6 @@ func main() {
 			logger.Fatal("failed to start http server", zap.Error(err))
 		}
 	}()
-
-	serviceWithTelemetry := NewTelemetryMiddleware(service)
-	serviceWithLogging := NewLoggingMiddleware(serviceWithTelemetry)
 
 	NewGRPCHandler(gRPCServer, serviceWithLogging, ch)
 
