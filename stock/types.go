@@ -11,22 +11,25 @@ import (
 
 type StockService interface {
 	CheckIfItemInStock(context.Context, []*pb.ItemsWithQuantity) (bool, []*pb.Item, error)
+	GetOrderService(ctx context.Context, o *pb.Order) ([]*pb.Item, error)
 	GetItems(context.Context) ([]*Item, error)
 	GetItem(ctx context.Context, id string) (*Item, error)
 	CreateItem(ctx context.Context, p *CreateItemRequest) (primitive.ObjectID, error)
 	UpdateItem(ctx context.Context, id string) (*Item, error)
 	UpdateStock(ctx context.Context, id string, quantity int) (*Item, error)
 	DeleteItem(ctx context.Context, id string) error
+	DeductStock(ctx context.Context, id string, quantity int) (*Item, error)
 }
 
 type StockStore interface {
-	GetItemsStock(context.Context, []string) ([]*pb.Item, error)
+	GetItemsStock(context.Context, []primitive.ObjectID) ([]*ItemStock, error)
 	GetItems(ctx context.Context) ([]*Item, error)
 	GetItem(context.Context, string) (*Item, error)
 	CreateItem(ctx context.Context, prodID string, priceID string, item *CreateItemRequest) (primitive.ObjectID, error)
 	UpdateItem(ctx context.Context, id string, item processor.Item) (*Item, error)
 	UpdateStock(ctx context.Context, id string, quantity int) (*Item, error)
 	DeleteItem(ctx context.Context, id string) error
+	DeductStock(ctx context.Context, id string, quantity int) (*Item, error)
 }
 
 // can upload picture
@@ -66,4 +69,11 @@ type Item struct {
 	Metadata    map[string]string  `bson:"metadata,omitempty"`
 	CreatedAt   time.Time          `bson:"created_at,omitempty"`
 	UpdatedAt   time.Time          `bson:"updated_at,omitempty"`
+}
+
+type ItemStock struct {
+	ID       primitive.ObjectID `bson:"_id,omitempty"`
+	Name     string             `bson:"name,omitempty"`
+	Quantity int64              `bson:"quantity,omitempty"`
+	PriceID  string             `bson:"priceID,omitempty"`
 }

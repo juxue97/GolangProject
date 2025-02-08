@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/juxue97/common"
-	pb "github.com/juxue97/common/api"
 	"github.com/juxue97/stock/processor"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -21,28 +20,14 @@ const (
 
 type store struct {
 	// mongoDB here
-	stock   map[string]*pb.Item
 	mongoDB *mongo.Client
 }
 
 func NewStore(mongoDB *mongo.Client) *store {
-	return &store{stock: map[string]*pb.Item{
-		"41": {
-			ID:       "41",
-			Name:     "ABC",
-			PriceID:  "price_1QmgLeQoT0OvyN0AztngBGhM",
-			Quantity: 10,
-		},
-		"42": {
-			ID:       "42",
-			Name:     "ABC",
-			PriceID:  "price_1QmgLeQoT0OvyN0AztngBGhM",
-			Quantity: 10,
-		},
-	}, mongoDB: mongoDB}
+	return &store{mongoDB: mongoDB}
 }
 
-func (s *store) GetItemsStock(ctx context.Context, ids []string) ([]*pb.Item, error) {
+func (s *store) GetItemsStock(ctx context.Context, ids []primitive.ObjectID) ([]*ItemStock, error) {
 	col := s.mongoDB.Database(DbName).Collection(CollectionName)
 
 	// look for all the relevant document with the document ids
@@ -54,9 +39,10 @@ func (s *store) GetItemsStock(ctx context.Context, ids []string) ([]*pb.Item, er
 
 	defer cursor.Close(ctx)
 
-	var items []*pb.Item
+	var items []*ItemStock
+
 	for cursor.Next(ctx) {
-		var item pb.Item
+		var item ItemStock
 		if err := cursor.Decode(&item); err != nil {
 			return nil, fmt.Errorf("failed to decode item: %v", err)
 		}
@@ -125,6 +111,7 @@ func (s *store) UpdateItem(ctx context.Context, id string, item processor.Item) 
 	col := s.mongoDB.Database(DbName).Collection(CollectionName)
 
 	var updatedItem *Item
+	item.UpdatedAt = time.Now()
 	update := bson.M{"$set": item}
 	filter := bson.M{"_id": oID}
 
@@ -149,7 +136,10 @@ func (s *store) UpdateStock(ctx context.Context, id string, quantity int) (*Item
 	col := s.mongoDB.Database(DbName).Collection(CollectionName)
 
 	var updatedItem *Item
-	update := bson.M{"$set": bson.M{"quantity": quantity}}
+	update := bson.M{"$set": bson.M{
+		"quantity":   quantity,
+		"updated_at": time.Now(),
+	}}
 	filter := bson.M{"_id": oID}
 
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
@@ -164,6 +154,37 @@ func (s *store) UpdateStock(ctx context.Context, id string, quantity int) (*Item
 	return updatedItem, nil
 }
 
+func (s *store) DeductStock(ctx context.Context, id string, quantity int) (*Item, error) {
+	oID, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, err
+	}
+
+	col := s.mongoDB.Database(DbName).Collection(CollectionName)
+
+	var updatedItem Item
+	update := bson.M{
+		"$inc": bson.M{"quantity": -quantity}, // Deduct quantity
+		"$set": bson.M{"updated_at": time.Now()},
+	}
+	filter := bson.M{
+		"_id":      oID,
+		"quantity": bson.M{"$gte": quantity}, // Ensure enough stock
+	}
+
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+
+	err = col.FindOneAndUpdate(ctx, filter, update, opts).Decode(&updatedItem)
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, fmt.Errorf("insufficient stock or item not found")
+		}
+		return nil, fmt.Errorf("update failed: %v", err)
+	}
+
+	return &updatedItem, nil
+}
+
 func (s *store) DeleteItem(ctx context.Context, id string) error {
 	oID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
@@ -176,7 +197,10 @@ func (s *store) DeleteItem(ctx context.Context, id string) error {
 	filter := bson.M{
 		"_id": oID,
 	}
-	update := bson.M{"$set": bson.M{"active": false}}
+	update := bson.M{"$set": bson.M{
+		"active":     false,
+		"updated_at": time.Now(),
+	}}
 
 	err = col.FindOneAndUpdate(ctx, filter, update).Decode(&item)
 	if err != nil {
@@ -196,11 +220,16 @@ func (s *store) CreateItem(ctx context.Context, prodID string, priceID string, i
 		Name:        item.Name,
 		Description: item.Description,
 		Price:       item.Price,
+		Active:      true,
 		Currency:    item.Currency,
 		Quantity:    item.Quantity,
 		PriceID:     priceID,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
+	}
+
+	if item.Metadata != nil {
+		newProd.Metadata = item.Metadata
 	}
 
 	col := s.mongoDB.Database(DbName).Collection(CollectionName)

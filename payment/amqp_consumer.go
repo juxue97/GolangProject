@@ -47,7 +47,6 @@ func (c *consumer) Listen(ch *amqp.Channel) {
 			_, messageSpan := tr.Start(ctx, fmt.Sprintf(
 				"AMQP - consume - %s", q.Name,
 			))
-
 			paymentLink, err := c.service.CreatePayment(ctx, o)
 			if err != nil {
 				log.Printf("failed to create payment: %v", err)

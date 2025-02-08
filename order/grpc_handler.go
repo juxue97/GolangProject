@@ -9,6 +9,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.opentelemetry.io/otel"
 
+	"github.com/juxue97/common"
 	pb "github.com/juxue97/common/api"
 	"github.com/juxue97/common/broker"
 	"google.golang.org/grpc"
@@ -50,8 +51,9 @@ func (h *gRPCHandler) CreateOrder(ctx context.Context, payload *pb.CreateOrderRe
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println("wtf", o.Items)
+	if len(o.Items) == 0 {
+		return nil, common.ErrNoDoc
+	}
 
 	marshalledOrder, err := json.Marshal(o)
 	if err != nil {
@@ -76,4 +78,8 @@ func (h *gRPCHandler) GetOrder(ctx context.Context, payload *pb.GetOrderRequest)
 
 func (h *gRPCHandler) UpdateOrder(ctx context.Context, payload *pb.Order) (*pb.Order, error) {
 	return h.service.updateOrder(ctx, payload)
+}
+
+func (h *gRPCHandler) GetOrderForStockUpdate(ctx context.Context, payload *pb.GetOrderRequest) (*pb.Order, error) {
+	return h.service.getOrderForStock(ctx, payload)
 }

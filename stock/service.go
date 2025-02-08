@@ -7,6 +7,7 @@ import (
 
 	"github.com/juxue97/common"
 	pb "github.com/juxue97/common/api"
+	"github.com/juxue97/stock/gateway"
 	"github.com/juxue97/stock/processor"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -14,58 +15,81 @@ import (
 type stockService struct {
 	store           StockStore
 	stripeProcessor processor.StockProcessor
+	gateway         gateway.StocksGateway
 }
 
-func NewStockService(store StockStore, stripeProcessor processor.StockProcessor) *stockService {
+func NewStockService(store StockStore, stripeProcessor processor.StockProcessor, gateway gateway.StocksGateway) *stockService {
 	return &stockService{
 		store:           store,
 		stripeProcessor: stripeProcessor,
+		gateway:         gateway,
 	}
 }
 
 func (s *stockService) CheckIfItemInStock(ctx context.Context, p []*pb.ItemsWithQuantity) (bool, []*pb.Item, error) {
-	itemIDs := make([]string, 0)
+	itemIDs := make([]primitive.ObjectID, 0, len(p)) // Preallocate slice
+
+	// Create a map for quick lookup of requested items
+	requestedItems := make(map[string]int32)
 
 	for _, item := range p {
-		itemIDs = append(itemIDs, item.ID)
+		oID, err := primitive.ObjectIDFromHex(item.ID)
+		if err != nil {
+			return false, nil, fmt.Errorf("invalid item ID: %s", item.ID)
+		}
+		itemIDs = append(itemIDs, oID)
+		requestedItems[item.ID] = item.Quantity
 	}
 
+	// Fetch items from stock
 	itemsInStock, err := s.store.GetItemsStock(ctx, itemIDs)
 	if err != nil {
 		return false, nil, err
 	}
 
+	// If no items found, return false immediately
 	if len(itemsInStock) == 0 {
-		return false, itemsInStock, err
+		return false, nil, nil
 	}
 
+	// Map to store available items
+	itemsInStockPB := make([]*pb.Item, 0, len(itemsInStock))
+
+	// Check stock and prepare response
 	for _, stockItem := range itemsInStock {
-		for _, reqItem := range p {
-			if stockItem.ID == reqItem.ID && stockItem.Quantity < reqItem.Quantity {
-				return false, itemsInStock, nil
-			}
+		stockID := stockItem.ID.Hex()
+		requiredQty, exists := requestedItems[stockID]
+
+		// If the requested item exists and quantity is insufficient, return false
+		if exists && int32(stockItem.Quantity) < requiredQty {
+			return false, nil, nil
+		}
+
+		// Add to response only if it exists in the request
+		if exists {
+			itemsInStockPB = append(itemsInStockPB, &pb.Item{
+				ID:       stockID,
+				Name:     stockItem.Name,
+				Quantity: requiredQty,
+				PriceID:  stockItem.PriceID,
+				// Initialize other fields if needed
+			})
 		}
 	}
 
-	items := make([]*pb.Item, 0)
-	for _, stockItem := range itemsInStock {
-		for _, reqItem := range p {
-			if stockItem.ID == reqItem.ID {
-				items = append(items, &pb.Item{
-					ID:       stockItem.ID,
-					Name:     stockItem.Name,
-					Quantity: stockItem.Quantity,
-					PriceID:  stockItem.PriceID,
-				})
-			}
-		}
-	}
-
-	return true, items, nil
+	return true, itemsInStockPB, nil
 }
 
 func (s *stockService) GetItems(ctx context.Context) ([]*Item, error) {
-	return s.store.GetItems(ctx)
+	item, err := s.store.GetItems(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if len(item) <= 0 {
+		return nil, common.ErrNoDoc
+	}
+
+	return item, nil
 }
 
 func (s *stockService) GetItem(ctx context.Context, id string) (*Item, error) {
@@ -101,8 +125,21 @@ func (s *stockService) UpdateItem(ctx context.Context, id string, p *UpdateItemR
 	return s.store.UpdateItem(ctx, id, updateMap)
 }
 
+func (s *stockService) DeductStock(ctx context.Context, id string, quantity int) (*Item, error) {
+	return s.store.DeductStock(ctx, id, quantity)
+}
+
 func (s *stockService) UpdateStock(ctx context.Context, id string, quantity int) (*Item, error) {
 	return s.store.UpdateStock(ctx, id, quantity)
+}
+
+func (s *stockService) GetOrderService(ctx context.Context, o *pb.Order) ([]*pb.Item, error) {
+	res, err := s.gateway.GetOrder(ctx, o)
+	if err != nil {
+		return nil, err
+	}
+
+	return res.Items, nil
 }
 
 func (s *stockService) DeleteItem(ctx context.Context, id string) error {

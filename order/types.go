@@ -12,6 +12,7 @@ type OrderService interface {
 	validateOrder(context.Context, *pb.CreateOrderRequest) ([]*pb.Item, error)
 	getOrder(context.Context, *pb.GetOrderRequest) (*pb.Order, error)
 	updateOrder(context.Context, *pb.Order) (*pb.Order, error)
+	getOrderForStock(ctx context.Context, payload *pb.GetOrderRequest) (*pb.Order, error)
 }
 
 type OrderStore interface {
@@ -33,6 +34,16 @@ func (o *Order) ToProto() *pb.Order {
 		ID:          o.ID.Hex(),
 		CustomerID:  o.CustomerID,
 		Status:      o.Status,
+		PaymentLink: o.PaymentLink,
+	}
+}
+
+func (o *Order) ToProtoStock() *pb.Order {
+	return &pb.Order{
+		ID:          o.ID.Hex(),
+		CustomerID:  o.CustomerID,
+		Status:      o.Status,
+		Items:       o.Items,
 		PaymentLink: o.PaymentLink,
 	}
 }

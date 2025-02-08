@@ -47,6 +47,14 @@ func (s *service) getOrder(ctx context.Context, payload *pb.GetOrderRequest) (*p
 	return o.ToProto(), nil
 }
 
+func (s *service) getOrderForStock(ctx context.Context, payload *pb.GetOrderRequest) (*pb.Order, error) {
+	o, err := s.store.Get(ctx, payload.OrderID, payload.CustomerID)
+	if err != nil {
+		return nil, err
+	}
+	return o.ToProtoStock(), nil
+}
+
 func (s *service) validateOrder(ctx context.Context, payload *pb.CreateOrderRequest) ([]*pb.Item, error) {
 	mergedItems := mergeItemsQuantities(payload.Items)
 

@@ -30,6 +30,13 @@ func (s *telemetryMiddleware) getOrder(ctx context.Context, payload *pb.GetOrder
 	return s.next.getOrder(ctx, payload)
 }
 
+func (s *telemetryMiddleware) getOrderForStock(ctx context.Context, payload *pb.GetOrderRequest) (*pb.Order, error) {
+	span := trace.SpanFromContext(ctx)
+	span.AddEvent(fmt.Sprintf("GetOrderForStock: %v", payload))
+
+	return s.next.getOrderForStock(ctx, payload)
+}
+
 func (s *telemetryMiddleware) validateOrder(ctx context.Context, payload *pb.CreateOrderRequest) ([]*pb.Item, error) {
 	span := trace.SpanFromContext(ctx)
 	span.AddEvent(fmt.Sprintf("ValidateOrder: %v", payload))

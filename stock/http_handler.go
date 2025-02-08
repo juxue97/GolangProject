@@ -72,7 +72,12 @@ func (h *stockHandler) handleGetItems(w http.ResponseWriter, r *http.Request) {
 
 	items, err := h.service.GetItems(ctx)
 	if err != nil {
-		common.InternalServerError(w, r, err)
+		switch err {
+		case common.ErrNoDoc:
+			common.NotFoundError(w, r, err)
+		default:
+			common.InternalServerError(w, r, err)
+		}
 		return
 	}
 

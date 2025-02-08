@@ -50,17 +50,16 @@ func (s *store) Get(ctx context.Context, orderID string, customerID string) (*Or
 	}
 
 	err = col.FindOne(ctx, filter).Decode(&o)
-
 	return &o, err
 }
 
 func (s *store) Update(ctx context.Context, id string, o *pb.Order) error {
 	col := s.mongoDB.Database(DbName).Collection(CollectionName)
-
 	oID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return err
 	}
+
 	filter := bson.M{
 		"_id": oID,
 	}

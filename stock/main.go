@@ -13,6 +13,7 @@ import (
 	mongoConn "github.com/juxue97/common/db"
 	"github.com/juxue97/common/discovery"
 	"github.com/juxue97/common/discovery/consul"
+	"github.com/juxue97/stock/gateway"
 	stripeProcessor "github.com/juxue97/stock/processor/stripe"
 	"github.com/stripe/stripe-go/v81"
 
@@ -105,9 +106,10 @@ func main() {
 	defer l.Close()
 
 	stripeProcessor := stripeProcessor.NewProcessor()
+	gateway := gateway.NewGateway(registry)
 
 	store := NewStore(mongoClient)
-	service := NewStockService(store, stripeProcessor)
+	service := NewStockService(store, stripeProcessor, gateway)
 	serviceWithTelemetry := NewTelemetryMiddleware(service)
 	serviceWithLogging := NewLoggingMiddleware(serviceWithTelemetry)
 

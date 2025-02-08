@@ -28,6 +28,7 @@ service OrderService{
     rpc CreateOrder(CreateOrderRequest) returns (Order);
     rpc GetOrder(GetOrderRequest) returns (Order);
     rpc UpdateOrder(Order) returns (Order);
+    rpc GetOrderForStockUpdate(GetOrderRequest) returns (Order);
 }
 
 service StockService{

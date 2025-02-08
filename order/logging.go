@@ -33,6 +33,14 @@ func (s *loggingMiddleware) getOrder(ctx context.Context, payload *pb.GetOrderRe
 	return s.next.getOrder(ctx, payload)
 }
 
+func (s *loggingMiddleware) getOrderForStock(ctx context.Context, payload *pb.GetOrderRequest) (*pb.Order, error) {
+	start := time.Now()
+	defer func() {
+		zap.L().Info("GetOrderForStock", zap.Duration("took", time.Since(start)))
+	}()
+	return s.next.getOrderForStock(ctx, payload)
+}
+
 func (s *loggingMiddleware) validateOrder(ctx context.Context, payload *pb.CreateOrderRequest) ([]*pb.Item, error) {
 	start := time.Now()
 	defer func() {
