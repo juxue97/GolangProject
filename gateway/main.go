@@ -50,10 +50,11 @@ func main() {
 	defer registry.Deregister(ctx, instanceID, serviceName)
 
 	// expose http server here, then grpc to other services
-	ordersGateway := gateway.NewGateway(registry)
+	ordersGateway := gateway.NewOrdersGateway(registry)
+	stocksGateway := gateway.NewStocksGateway(registry)
 
 	mux := http.NewServeMux()
-	handler := NewHandler(ordersGateway)
+	handler := NewHandler(ordersGateway, stocksGateway)
 	handler.registerRoutes(mux)
 
 	if err := http.ListenAndServe(httpAddr, mux); err != nil {

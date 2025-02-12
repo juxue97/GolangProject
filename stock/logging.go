@@ -26,7 +26,7 @@ func (s *loggingMiddleware) CheckIfItemInStock(ctx context.Context, p []*pb.Item
 	return s.next.CheckIfItemInStock(ctx, p)
 }
 
-func (s *loggingMiddleware) GetItems(ctx context.Context) ([]*Item, error) {
+func (s *loggingMiddleware) GetItems(ctx context.Context) ([]*pb.StockItem, error) {
 	start := time.Now()
 	defer func() {
 		zap.L().Info("GetItems", zap.Duration("took", time.Since(start)))
@@ -34,7 +34,7 @@ func (s *loggingMiddleware) GetItems(ctx context.Context) ([]*Item, error) {
 	return s.next.GetItems(ctx)
 }
 
-func (s *loggingMiddleware) GetItem(ctx context.Context, id string) (*Item, error) {
+func (s *loggingMiddleware) GetItem(ctx context.Context, id string) (*pb.StockItem, error) {
 	start := time.Now()
 	defer func() {
 		zap.L().Info("GetItem", zap.Duration("took", time.Since(start)))
@@ -42,7 +42,7 @@ func (s *loggingMiddleware) GetItem(ctx context.Context, id string) (*Item, erro
 	return s.next.GetItem(ctx, id)
 }
 
-func (s *loggingMiddleware) UpdateItem(ctx context.Context, id string, p *UpdateItemRequest) (*Item, error) {
+func (s *loggingMiddleware) UpdateItem(ctx context.Context, id string, p *pb.UpdateStockItemRequest) (*pb.StockItem, error) {
 	start := time.Now()
 	defer func() {
 		zap.L().Info("UpdateItem", zap.Duration("took", time.Since(start)))
@@ -50,7 +50,7 @@ func (s *loggingMiddleware) UpdateItem(ctx context.Context, id string, p *Update
 	return s.next.UpdateItem(ctx, id, p)
 }
 
-func (s *loggingMiddleware) UpdateStock(ctx context.Context, id string, quantity int) (*Item, error) {
+func (s *loggingMiddleware) UpdateStock(ctx context.Context, id string, quantity int) (*pb.StockItem, error) {
 	start := time.Now()
 	defer func() {
 		zap.L().Info("UpdateStock", zap.Duration("took", time.Since(start)))
@@ -78,7 +78,7 @@ func (s *loggingMiddleware) DeleteItem(ctx context.Context, id string) error {
 	return s.next.DeleteItem(ctx, id)
 }
 
-func (s *loggingMiddleware) CreateItem(ctx context.Context, p *CreateItemRequest) (primitive.ObjectID, error) {
+func (s *loggingMiddleware) CreateItem(ctx context.Context, p *pb.CreateItemRequest) (primitive.ObjectID, error) {
 	start := time.Now()
 	defer func() {
 		zap.L().Info("CreateItem", zap.Duration("took", time.Since(start)))

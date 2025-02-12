@@ -80,7 +80,7 @@ func (s *stockService) CheckIfItemInStock(ctx context.Context, p []*pb.ItemsWith
 	return true, itemsInStockPB, nil
 }
 
-func (s *stockService) GetItems(ctx context.Context) ([]*Item, error) {
+func (s *stockService) GetItems(ctx context.Context) ([]*pb.StockItem, error) {
 	item, err := s.store.GetItems(ctx)
 	if err != nil {
 		return nil, err
@@ -92,11 +92,11 @@ func (s *stockService) GetItems(ctx context.Context) ([]*Item, error) {
 	return item, nil
 }
 
-func (s *stockService) GetItem(ctx context.Context, id string) (*Item, error) {
+func (s *stockService) GetItem(ctx context.Context, id string) (*pb.StockItem, error) {
 	return s.store.GetItem(ctx, id)
 }
 
-func (s *stockService) UpdateItem(ctx context.Context, id string, p *UpdateItemRequest) (*Item, error) {
+func (s *stockService) UpdateItem(ctx context.Context, id string, p *pb.UpdateStockItemRequest) (*pb.StockItem, error) {
 	// Note: product id never change, but priceID will
 	// first of all, obtain the product ID from MongoDB first
 	oldItem, err := s.store.GetItem(ctx, id)
@@ -114,7 +114,7 @@ func (s *stockService) UpdateItem(ctx context.Context, id string, p *UpdateItemR
 	}
 
 	var newPriceID string
-	newPriceID, err = s.stripeProcessor.UpdateProduct(oldItem.ProductID, oldItem.PriceID, updateMap)
+	newPriceID, err = s.stripeProcessor.UpdateProduct(oldItem.ProductId, oldItem.PriceId, updateMap)
 	if err != nil {
 		return nil, err
 	}
@@ -129,7 +129,7 @@ func (s *stockService) DeductStock(ctx context.Context, id string, quantity int)
 	return s.store.DeductStock(ctx, id, quantity)
 }
 
-func (s *stockService) UpdateStock(ctx context.Context, id string, quantity int) (*Item, error) {
+func (s *stockService) UpdateStock(ctx context.Context, id string, quantity int) (*pb.StockItem, error) {
 	return s.store.UpdateStock(ctx, id, quantity)
 }
 
@@ -151,7 +151,7 @@ func (s *stockService) DeleteItem(ctx context.Context, id string) error {
 	param := &processor.Item{
 		Active: false,
 	}
-	_, err = s.stripeProcessor.UpdateProduct(oldItem.ProductID, oldItem.PriceID, *param)
+	_, err = s.stripeProcessor.UpdateProduct(oldItem.ProductId, oldItem.PriceId, *param)
 	if err != nil {
 		return err
 	}
@@ -159,7 +159,7 @@ func (s *stockService) DeleteItem(ctx context.Context, id string) error {
 	return s.store.DeleteItem(ctx, id)
 }
 
-func (s *stockService) CreateItem(ctx context.Context, p *CreateItemRequest) (primitive.ObjectID, error) {
+func (s *stockService) CreateItem(ctx context.Context, p *pb.CreateItemRequest) (primitive.ObjectID, error) {
 	// call the stripe api to create new product
 	// get the productID, Name and PriceID
 	if p.Quantity <= 0 {

@@ -24,19 +24,19 @@ func (s *telemetryMiddleware) CheckIfItemInStock(ctx context.Context, p []*pb.It
 	return s.next.CheckIfItemInStock(ctx, p)
 }
 
-func (s *telemetryMiddleware) GetItems(ctx context.Context) ([]*Item, error) {
+func (s *telemetryMiddleware) GetItems(ctx context.Context) ([]*pb.StockItem, error) {
 	span := trace.SpanFromContext(ctx)
 	span.AddEvent(fmt.Sprintf("GetItems"))
 	return s.next.GetItems(ctx)
 }
 
-func (s *telemetryMiddleware) GetItem(ctx context.Context, id string) (*Item, error) {
+func (s *telemetryMiddleware) GetItem(ctx context.Context, id string) (*pb.StockItem, error) {
 	span := trace.SpanFromContext(ctx)
 	span.AddEvent(fmt.Sprintf("GetItem: %v", id))
 	return s.next.GetItem(ctx, id)
 }
 
-func (s *telemetryMiddleware) UpdateItem(ctx context.Context, id string, p *UpdateItemRequest) (*Item, error) {
+func (s *telemetryMiddleware) UpdateItem(ctx context.Context, id string, p *pb.UpdateStockItemRequest) (*pb.StockItem, error) {
 	span := trace.SpanFromContext(ctx)
 	span.AddEvent(fmt.Sprintf("UpdateItem: %v, payload: %v", id, p))
 	return s.next.UpdateItem(ctx, id, p)
@@ -53,7 +53,7 @@ func (s *telemetryMiddleware) GetOrderService(ctx context.Context, o *pb.Order) 
 	return s.next.GetOrderService(ctx, o)
 }
 
-func (s *telemetryMiddleware) UpdateStock(ctx context.Context, id string, quantity int) (*Item, error) {
+func (s *telemetryMiddleware) UpdateStock(ctx context.Context, id string, quantity int) (*pb.StockItem, error) {
 	span := trace.SpanFromContext(ctx)
 	span.AddEvent(fmt.Sprintf("UpdateStock: %v, quantity: %v", id, quantity))
 	return s.next.UpdateStock(ctx, id, quantity)
@@ -65,7 +65,7 @@ func (s *telemetryMiddleware) DeleteItem(ctx context.Context, id string) error {
 	return s.next.DeleteItem(ctx, id)
 }
 
-func (s *telemetryMiddleware) CreateItem(ctx context.Context, p *CreateItemRequest) (primitive.ObjectID, error) {
+func (s *telemetryMiddleware) CreateItem(ctx context.Context, p *pb.CreateItemRequest) (primitive.ObjectID, error) {
 	span := trace.SpanFromContext(ctx)
 	span.AddEvent(fmt.Sprintf("CreateItem: %v", p))
 	return s.next.CreateItem(ctx, p)

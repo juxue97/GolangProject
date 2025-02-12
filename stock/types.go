@@ -12,48 +12,24 @@ import (
 type StockService interface {
 	CheckIfItemInStock(context.Context, []*pb.ItemsWithQuantity) (bool, []*pb.Item, error)
 	GetOrderService(ctx context.Context, o *pb.Order) ([]*pb.Item, error)
-	GetItems(context.Context) ([]*Item, error)
-	GetItem(ctx context.Context, id string) (*Item, error)
-	CreateItem(ctx context.Context, p *CreateItemRequest) (primitive.ObjectID, error)
-	UpdateItem(ctx context.Context, id string) (*Item, error)
-	UpdateStock(ctx context.Context, id string, quantity int) (*Item, error)
+	GetItems(context.Context) ([]*pb.StockItem, error)
+	GetItem(ctx context.Context, id string) (*pb.StockItem, error)
+	CreateItem(ctx context.Context, p *pb.CreateItemRequest) (primitive.ObjectID, error)
+	UpdateItem(ctx context.Context, id string) (*pb.StockItem, error)
+	UpdateStock(ctx context.Context, id string, quantity int) (*pb.StockItem, error)
 	DeleteItem(ctx context.Context, id string) error
 	DeductStock(ctx context.Context, id string, quantity int) (*Item, error)
 }
 
 type StockStore interface {
 	GetItemsStock(context.Context, []primitive.ObjectID) ([]*ItemStock, error)
-	GetItems(ctx context.Context) ([]*Item, error)
-	GetItem(context.Context, string) (*Item, error)
-	CreateItem(ctx context.Context, prodID string, priceID string, item *CreateItemRequest) (primitive.ObjectID, error)
-	UpdateItem(ctx context.Context, id string, item processor.Item) (*Item, error)
-	UpdateStock(ctx context.Context, id string, quantity int) (*Item, error)
+	GetItems(ctx context.Context) ([]*pb.StockItem, error)
+	GetItem(context.Context, string) (*pb.StockItem, error)
+	CreateItem(ctx context.Context, prodID string, priceID string, item *pb.CreateItemRequest) (primitive.ObjectID, error)
+	UpdateItem(ctx context.Context, id string, item processor.Item) (*pb.StockItem, error)
+	UpdateStock(ctx context.Context, id string, quantity int) (*pb.StockItem, error)
 	DeleteItem(ctx context.Context, id string) error
 	DeductStock(ctx context.Context, id string, quantity int) (*Item, error)
-}
-
-// can upload picture
-type CreateItemRequest struct {
-	Name        string            `json:"name" validate:"required,max=1000"`
-	Description string            `json:"description" validate:"required,max=1000"`
-	Price       float64           `json:"price" validate:"required"`
-	Currency    string            `json:"currency" validate:"required"`
-	Quantity    int64             `json:"quantity" validate:"required,min=1"`
-	Metadata    map[string]string `json:"metadata,omitempty"`
-}
-
-type CreateItemResponse struct {
-	ObjectID primitive.ObjectID
-}
-
-type UpdateItemRequest struct {
-	Name        string            `json:"name" validate:"omitempty,max=1000"`
-	Description string            `json:"description" validate:"omitempty,max=1000"`
-	Price       float64           `json:"price" validate:"omitempty"`
-	Currency    string            `json:"currency" validate:"omitempty"`
-	Quantity    int64             `json:"quantity" validate:"omitempty,min=1"`
-	Metadata    map[string]string `json:"metadata" validate:"omitempty"`
-	Active      bool              `json:"active" validate:"omitempty" default:"true"`
 }
 
 type Item struct {

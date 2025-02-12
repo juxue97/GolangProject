@@ -4,7 +4,9 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"strconv"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/juxue97/common"
 	pb "github.com/juxue97/common/api"
 	"github.com/juxue97/gateway/gateway"
@@ -15,13 +17,19 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+var Validate *validator.Validate = validator.New(validator.WithRequiredStructEnabled())
+
 type handler struct {
 	// gateway - service discovery
-	gateway gateway.OrdersGateway
+	ordersGateway gateway.OrdersGateway
+	stocksGateway gateway.StocksGateway
 }
 
-func NewHandler(gateway gateway.OrdersGateway) *handler {
-	return &handler{gateway: gateway}
+func NewHandler(ordersGateway gateway.OrdersGateway, stocksGateway gateway.StocksGateway) *handler {
+	return &handler{
+		ordersGateway: ordersGateway,
+		stocksGateway: stocksGateway,
+	}
 }
 
 func (h *handler) registerRoutes(mux *http.ServeMux) {
@@ -29,6 +37,13 @@ func (h *handler) registerRoutes(mux *http.ServeMux) {
 
 	mux.HandleFunc("POST /api/customers/{customerID}/orders", h.handleCreateOrder)
 	mux.HandleFunc("GET /api/customers/{customerID}/orders/{orderID}", h.handleGetOrder)
+
+	mux.HandleFunc("POST /stocks", h.handleCreateItem)
+	mux.HandleFunc("GET /stocks", h.handleGetItems)
+	mux.HandleFunc("GET /stocks/{id}", h.handleGetItem)
+	mux.HandleFunc("PUT /stocks/{id}", h.handleUpdateItem)
+	mux.HandleFunc("PUT /stocks/{id}/{quantity}", h.handleUpdateStock)
+	mux.HandleFunc("DELETE /stocks/{id}", h.handleDeleteItem)
 }
 
 func validateItems(items []*pb.ItemsWithQuantity) error {
@@ -65,7 +80,7 @@ func (h *handler) handleCreateOrder(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	o, err := h.gateway.CreateOrder(ctx, &pb.CreateOrderRequest{
+	o, err := h.ordersGateway.CreateOrder(ctx, &pb.CreateOrderRequest{
 		CustomerID: customerID,
 		Items:      items,
 	})
@@ -99,7 +114,7 @@ func (h *handler) handleGetOrder(w http.ResponseWriter, r *http.Request) {
 	ctx, span := tr.Start(r.Context(), fmt.Sprintf("%s %s", r.Method, r.RequestURI))
 	defer span.End()
 
-	o, err := h.gateway.GetOrder(ctx, orderID, customerID)
+	o, err := h.ordersGateway.GetOrder(ctx, orderID, customerID)
 	rStatus := status.Convert(err)
 	if rStatus != nil {
 		span.SetStatus(otelCodes.Error, err.Error())
@@ -114,5 +129,155 @@ func (h *handler) handleGetOrder(w http.ResponseWriter, r *http.Request) {
 
 	if err := common.WriteJSON(w, http.StatusOK, o); err != nil {
 		common.InternalServerError(w, r, err)
+	}
+}
+
+func (h *handler) handleCreateItem(w http.ResponseWriter, r *http.Request) {
+	// call the service layer
+	var payload *pb.CreateItemRequest
+
+	if err := common.ReadJSON(w, r, &payload); err != nil {
+		common.BadRequestResponse(w, r, err)
+		return
+	}
+	if err := Validate.Struct(payload); err != nil {
+		common.UnprocessableEntityResponse(w, r, err)
+		return
+	}
+
+	ctx := r.Context()
+
+	oID, err := h.stocksGateway.CreateItem(ctx, payload)
+	if err != nil {
+		switch err {
+		case common.ErrNoQuantity:
+			common.BadRequestResponse(w, r, err)
+
+		case common.ErrConvertID:
+			common.InternalServerError(w, r, err)
+
+		default:
+			common.InternalServerError(w, r, err)
+		}
+		return
+	}
+
+	if err := common.WriteJSON(w, http.StatusCreated, oID); err != nil {
+		common.InternalServerError(w, r, err)
+		return
+	}
+}
+
+func (h *handler) handleGetItems(w http.ResponseWriter, r *http.Request) {
+	// no payload, extract all records from db
+	ctx := r.Context()
+
+	items, err := h.stocksGateway.GetItems(ctx)
+	if err != nil {
+		switch err {
+		case common.ErrNoDoc:
+			common.NotFoundError(w, r, err)
+		default:
+			common.InternalServerError(w, r, err)
+		}
+		return
+	}
+
+	if err := common.WriteJSON(w, http.StatusOK, items); err != nil {
+		common.InternalServerError(w, r, err)
+		return
+	}
+}
+
+func (h *handler) handleGetItem(w http.ResponseWriter, r *http.Request) {
+	oID := r.PathValue("id")
+	ctx := r.Context()
+
+	item, err := h.stocksGateway.GetItem(ctx, oID)
+	if err != nil {
+		switch err {
+		case common.ErrNoDoc:
+			common.NotFoundError(w, r, err)
+		default:
+			common.InternalServerError(w, r, err)
+		}
+		return
+	}
+
+	if err := common.WriteJSON(w, http.StatusOK, item); err != nil {
+		common.InternalServerError(w, r, err)
+		return
+	}
+}
+
+func (h *handler) handleUpdateItem(w http.ResponseWriter, r *http.Request) {
+	oID := r.PathValue("id")
+	ctx := r.Context()
+
+	var payload *pb.UpdateStockItemRequest
+	if err := common.ReadJSON(w, r, &payload); err != nil {
+		common.BadRequestResponse(w, r, err)
+		return
+	}
+	if err := Validate.Struct(payload); err != nil {
+		common.UnprocessableEntityResponse(w, r, err)
+		return
+	}
+
+	item, err := h.stocksGateway.UpdateItem(ctx, oID, payload)
+	if err != nil {
+		switch err {
+		case common.ErrNoDoc:
+			common.NotFoundError(w, r, err)
+		default:
+			common.InternalServerError(w, r, err)
+		}
+		return
+	}
+
+	if err := common.WriteJSON(w, http.StatusOK, item); err != nil {
+		common.InternalServerError(w, r, err)
+		return
+	}
+}
+
+func (h *handler) handleUpdateStock(w http.ResponseWriter, r *http.Request) {
+	oID := r.PathValue("id")
+	quantity, _ := strconv.Atoi(r.PathValue("quantity"))
+
+	ctx := r.Context()
+
+	item, err := h.stocksGateway.UpdateStockQuantity(ctx, oID, quantity)
+	if err != nil {
+		switch err {
+		case common.ErrNoDoc:
+			common.NotFoundError(w, r, err)
+		default:
+			common.InternalServerError(w, r, err)
+		}
+		return
+	}
+	if err := common.WriteJSON(w, http.StatusOK, item); err != nil {
+		common.InternalServerError(w, r, err)
+	}
+}
+
+func (h *handler) handleDeleteItem(w http.ResponseWriter, r *http.Request) {
+	oID := r.PathValue("id")
+	ctx := r.Context()
+
+	if err := h.stocksGateway.DeleteItem(ctx, oID); err != nil {
+		switch err {
+		case common.ErrNoDoc:
+			common.NotFoundError(w, r, err)
+		default:
+			common.InternalServerError(w, r, err)
+		}
+		return
+	}
+
+	if err := common.WriteJSON(w, http.StatusNoContent, ""); err != nil {
+		common.InternalServerError(w, r, err)
+		return
 	}
 }

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/juxue97/common"
+	pb "github.com/juxue97/common/api"
 	"github.com/juxue97/stock/processor"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -56,7 +57,7 @@ func (s *store) GetItemsStock(ctx context.Context, ids []primitive.ObjectID) ([]
 	return items, nil
 }
 
-func (s *store) GetItems(ctx context.Context) ([]*Item, error) {
+func (s *store) GetItems(ctx context.Context) ([]*pb.StockItem, error) {
 	col := s.mongoDB.Database(DbName).Collection(CollectionName)
 
 	cursor, err := col.Find(ctx, bson.M{})
@@ -65,9 +66,9 @@ func (s *store) GetItems(ctx context.Context) ([]*Item, error) {
 	}
 	defer cursor.Close(ctx)
 
-	var items []*Item
+	var items []*pb.StockItem
 	for cursor.Next(ctx) {
-		var item *Item
+		var item *pb.StockItem
 		if err := cursor.Decode(&item); err != nil {
 			return nil, fmt.Errorf("failed to decode item: %v", err)
 		}
@@ -81,7 +82,7 @@ func (s *store) GetItems(ctx context.Context) ([]*Item, error) {
 	return items, nil
 }
 
-func (s *store) GetItem(ctx context.Context, id string) (*Item, error) {
+func (s *store) GetItem(ctx context.Context, id string) (*pb.StockItem, error) {
 	col := s.mongoDB.Database(DbName).Collection(CollectionName)
 
 	oID, err := primitive.ObjectIDFromHex(id)
@@ -91,7 +92,7 @@ func (s *store) GetItem(ctx context.Context, id string) (*Item, error) {
 
 	filter := bson.M{"_id": oID}
 
-	var item *Item
+	var item *pb.StockItem
 	err = col.FindOne(ctx, filter).Decode(&item)
 	if err == mongo.ErrNoDocuments {
 		return nil, common.ErrNoDoc
@@ -102,7 +103,7 @@ func (s *store) GetItem(ctx context.Context, id string) (*Item, error) {
 	return item, nil
 }
 
-func (s *store) UpdateItem(ctx context.Context, id string, item processor.Item) (*Item, error) {
+func (s *store) UpdateItem(ctx context.Context, id string, item processor.Item) (*pb.StockItem, error) {
 	oID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
@@ -110,7 +111,7 @@ func (s *store) UpdateItem(ctx context.Context, id string, item processor.Item) 
 
 	col := s.mongoDB.Database(DbName).Collection(CollectionName)
 
-	var updatedItem *Item
+	var updatedItem *pb.StockItem
 	item.UpdatedAt = time.Now()
 	update := bson.M{"$set": item}
 	filter := bson.M{"_id": oID}
@@ -127,7 +128,7 @@ func (s *store) UpdateItem(ctx context.Context, id string, item processor.Item) 
 	return updatedItem, nil
 }
 
-func (s *store) UpdateStock(ctx context.Context, id string, quantity int) (*Item, error) {
+func (s *store) UpdateStock(ctx context.Context, id string, quantity int) (*pb.StockItem, error) {
 	oID, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
 		return nil, err
@@ -135,7 +136,7 @@ func (s *store) UpdateStock(ctx context.Context, id string, quantity int) (*Item
 
 	col := s.mongoDB.Database(DbName).Collection(CollectionName)
 
-	var updatedItem *Item
+	var updatedItem *pb.StockItem
 	update := bson.M{"$set": bson.M{
 		"quantity":   quantity,
 		"updated_at": time.Now(),
@@ -213,7 +214,7 @@ func (s *store) DeleteItem(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *store) CreateItem(ctx context.Context, prodID string, priceID string, item *CreateItemRequest) (primitive.ObjectID, error) {
+func (s *store) CreateItem(ctx context.Context, prodID string, priceID string, item *pb.CreateItemRequest) (primitive.ObjectID, error) {
 	// create a new document
 	newProd := Item{
 		ProductID:   prodID,

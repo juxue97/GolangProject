@@ -1,6 +1,7 @@
 syntax = "proto3";
 
 option go_package = "github.com/juxue97/common/api";
+import "google/protobuf/timestamp.proto";
 
 package api;
 
@@ -34,6 +35,12 @@ service OrderService{
 service StockService{
     rpc CheckIfItemsInStock(CheckIfItemsInStockRequest) returns (CheckIfItemsInStockResponse);
     rpc GetItems(GetItemsRequest) returns (GetItemsResponse);
+    rpc CreateStockItem(CreateItemRequest) returns (CreateItemResponse);
+    rpc GetStockItems(Empty) returns (GetStockItemsResponse);
+    rpc GetStockItem(GetStockItemRequest) returns (StockItem);
+    rpc UpdateStockItem(UpdateStockItemRequest) returns (StockItem);
+    rpc UpdateStockQuantity(UpdateStockQuantityRequest) returns (StockItem);
+    rpc DeleteItem(DeleteItemRequest) returns (Empty);
 }
 
 message CheckIfItemsInStockRequest{
@@ -74,3 +81,61 @@ message CreateOrderRequest{
     string customerID = 1;
     repeated ItemsWithQuantity Items =2 ;
 }
+
+message CreateItemRequest {
+    string name = 1;
+    string description = 2;
+    double price = 3;
+    string currency = 4;
+    int64 quantity = 5;
+    map<string, string> metadata = 6;
+}
+
+message CreateItemResponse {
+    string objectID = 1;
+}
+
+message StockItem {
+    string id = 1;
+    string product_id = 2;
+    string name = 3;
+    string description = 4;
+    double price = 5;
+    string currency = 6;
+    int64 quantity = 7;
+    bool active = 8;
+    string price_id = 9;
+    map<string, string> metadata = 10;
+    google.protobuf.Timestamp created_at = 11;
+    google.protobuf.Timestamp updated_at = 12;
+}
+
+message GetStockItemsResponse {
+    repeated StockItem Items=1;
+}
+
+message GetStockItemRequest {
+    string id =1;
+}
+
+message UpdateStockItemRequest{
+    string id = 1;
+    string name = 2;
+    string description = 3;
+    double price = 4;
+    string currency = 5;
+    int64 quantity = 6;
+    map<string, string> metadata = 7;
+    bool active = 8;
+}
+
+message UpdateStockQuantityRequest{
+    string ID =1;
+    int64 Quantity=2;
+}
+
+message DeleteItemRequest{
+    string ID=1;
+}
+
+message Empty{}

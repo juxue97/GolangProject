@@ -10,15 +10,15 @@ import (
 
 var orderServiceName = "orders"
 
-type gateway struct {
+type ordersGateway struct {
 	registry discovery.Registry
 }
 
-func NewGateway(registry discovery.Registry) *gateway {
-	return &gateway{registry: registry}
+func NewOrdersGateway(registry discovery.Registry) *ordersGateway {
+	return &ordersGateway{registry: registry}
 }
 
-func (g *gateway) CreateOrder(ctx context.Context, payload *pb.CreateOrderRequest) (*pb.Order, error) {
+func (g *ordersGateway) CreateOrder(ctx context.Context, payload *pb.CreateOrderRequest) (*pb.Order, error) {
 	conn, err := discovery.ServiceConnection(context.Background(), orderServiceName, g.registry)
 	if err != nil {
 		log.Fatalf("Failed to dial server: %v", err)
@@ -31,7 +31,7 @@ func (g *gateway) CreateOrder(ctx context.Context, payload *pb.CreateOrderReques
 	})
 }
 
-func (g *gateway) GetOrder(ctx context.Context, orderID string, customerID string) (*pb.Order, error) {
+func (g *ordersGateway) GetOrder(ctx context.Context, orderID string, customerID string) (*pb.Order, error) {
 	conn, err := discovery.ServiceConnection(context.Background(), orderServiceName, g.registry)
 	if err != nil {
 		log.Fatalf("Failed to dial server: %v", err)

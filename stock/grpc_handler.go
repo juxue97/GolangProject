@@ -34,13 +34,60 @@ func (g *gRPCHandler) CheckIfItemsInStock(ctx context.Context, payload *pb.Check
 	}, nil
 }
 
-// func (g *gRPCHandler) GetItems(ctx context.Context, payload *pb.GetItemsRequest) (*pb.GetItemsResponse, error) {
-// 	items, err := g.service.GetItems(ctx, payload.ItemIDs)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+func (g *gRPCHandler) CreateItem(ctx context.Context, payload *pb.CreateItemRequest) (*pb.CreateItemResponse, error) {
+	oID, err := g.service.CreateItem(ctx, payload)
+	if err != nil {
+		return nil, err
+	}
 
-// 	return &pb.GetItemsResponse{
-// 		Items: items,
-// 	}, nil
-// }
+	return &pb.CreateItemResponse{
+		ObjectID: oID.Hex(),
+	}, nil
+}
+
+func (g *gRPCHandler) GetStockItems(ctx context.Context, req *pb.Empty) (*pb.GetStockItemsResponse, error) {
+	items, err := g.service.GetItems(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GetStockItemsResponse{
+		Items: items,
+	}, nil
+}
+
+func (g *gRPCHandler) GetStockItem(ctx context.Context, p *pb.GetStockItemRequest) (*pb.StockItem, error) {
+	item, err := g.service.GetItem(ctx, p.Id)
+	if err != nil {
+		return nil, err
+	}
+
+	return item, nil
+}
+
+func (g *gRPCHandler) UpdateItem(ctx context.Context, p *pb.UpdateStockItemRequest) (*pb.StockItem, error) {
+	item, err := g.service.UpdateItem(ctx, p.Id, p)
+	if err != nil {
+		return nil, err
+	}
+
+	return item, nil
+}
+
+func (g *gRPCHandler) UpdateStockQuantity(ctx context.Context, p *pb.UpdateStockQuantityRequest) (*pb.StockItem, error) {
+	item, err := g.service.UpdateStock(ctx, p.ID, int(p.Quantity))
+	if err != nil {
+		return nil, err
+	}
+
+	return item, nil
+}
+
+func (g *gRPCHandler) DeleteItem(ctx context.Context, p *pb.DeleteItemRequest) (*pb.Empty, error) {
+	err := g.service.DeleteItem(ctx, p.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return nil, nil
+}

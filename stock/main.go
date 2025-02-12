@@ -113,13 +113,13 @@ func main() {
 	serviceWithTelemetry := NewTelemetryMiddleware(service)
 	serviceWithLogging := NewLoggingMiddleware(serviceWithTelemetry)
 
-	mux := http.NewServeMux()
-	httpServer := NewStockHandler(service)
-	httpServer.registerRouters(mux)
+	// mux := http.NewServeMux()
+	// httpServer := NewStockHandler(service)
+	// httpServer.registerRouters(mux)
 
 	// adding prefix
-	v1 := http.NewServeMux()
-	v1.Handle("/api/", http.StripPrefix("/api", mux))
+	// v1 := http.NewServeMux()
+	// v1.Handle("/api/", http.StripPrefix("/api", mux))
 
 	go func() {
 		logger.Info("starting http server", zap.String("port", httpAddr))
