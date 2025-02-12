@@ -1,7 +1,6 @@
 go 1.23.2
 
 use (
-	./auth
 	./common
 	./gateway
 	./order
